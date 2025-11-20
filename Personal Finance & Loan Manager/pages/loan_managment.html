@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Management - ALI Finance Manager</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 260px;
+            background: #1e3a8a;
+            z-index: 50;
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            transition: margin-left 0.3s ease;
+        }
+        
+        .main-content.expanded {
+            margin-left: 0;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .loan-table {
+            min-width: 1000px;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-paid {
+            background: #d1fae5;
+            color: #047857;
+        }
+        
+        .status-overdue {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .action-btn {
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            transition: all 0.2s;
+            min-width: 36px;
+            min-height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .mobile-card {
+            display: none;
+        }
+        
+        .delete-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .delete-modal.active {
+            display: flex;
+        }
+        
+        .sort-icon {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .sort-icon:hover {
+            color: #1e3a8a;
+        }
+        
+        .sort-icon.active {
+            color: #1e3a8a;
+        }
+        
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .desktop-table {
+                display: none;
+            }
+            
+            .mobile-card {
+                display: block;
+            }
+        }
+        
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+        }
+        
+        .overlay.active {
+            display: block;
+        }
+        
+        .bulk-actions {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            z-index: 60;
+        }
+        
+        .bulk-actions.active {
+            display: flex;
+        }
+    </style>
+  
+  <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Falifinanc7595back.builtwithrocket.new&_be=https%3A%2F%2Fapplication.rocket.new&_v=0.1.10"></script>
+  <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.1"></script>
+  </head>
+<body class="bg-background">
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="sidebar">
+        <div class="flex flex-col h-full">
+            <!-- Logo Section -->
+            <div class="p-6 border-b border-primary-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                        <i class="fas fa-wallet text-primary text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-white font-bold text-lg">ALI Finance</h1>
+                        <p class="text-primary-300 text-xs">Manager</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="flex-1 p-4 overflow-y-auto">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="financial_dashboard.html" class="flex items-center gap-3 px-4 py-3 text-primary-100 hover:bg-primary-800 rounded-lg transition-colors">
+                            <i class="fas fa-chart-line w-5"></i>
+                            <span id="nav-dashboard">Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="loan_management.html" class="flex items-center gap-3 px-4 py-3 bg-primary-800 text-white rounded-lg">
+                            <i class="fas fa-hand-holding-usd w-5"></i>
+                            <span id="nav-loans">My Loans</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="payment_history.html" class="flex items-center gap-3 px-4 py-3 text-primary-100 hover:bg-primary-800 rounded-lg transition-colors">
+                            <i class="fas fa-history w-5"></i>
+                            <span id="nav-payments">Payment History</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="javascript:void(0)" class="flex items-center gap-3 px-4 py-3 text-primary-100 hover:bg-primary-800 rounded-lg transition-colors">
+                            <i class="fas fa-chart-bar w-5"></i>
+                            <span id="nav-reports">Reports</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="javascript:void(0)" class="flex items-center gap-3 px-4 py-3 text-primary-100 hover:bg-primary-800 rounded-lg transition-colors">
+                            <i class="fas fa-cog w-5"></i>
+                            <span id="nav-settings">Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- User Profile Section -->
+            <div class="p-4 border-t border-primary-800">
+                <div class="flex items-center gap-3 px-4 py-3">
+                    <img src="https://images.unsplash.com/photo-1629525526541-02606b575fdf" 
+                         alt="User profile picture"
+                         class="w-10 h-10 rounded-full object-cover"
+                         onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'; this.onerror=null;">
+                    <div class="flex-1">
+                        <p class="text-white font-medium text-sm" id="user-name">User Name</p>
+                        <p class="text-primary-300 text-xs" id="user-email">user@example.com</p>
+                    </div>
+                    <button onclick="logout()" class="text-primary-300 hover:text-white transition-colors">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Overlay for mobile -->
+    <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
+
+    <!-- Main Content Area -->
+    <main id="mainContent" class="main-content min-h-screen">
+        <!-- Header -->
+        <header class="bg-white border-b border-border sticky top-0 z-30">
+            <div class="px-4 lg:px-8 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <button onclick="toggleSidebar()" class="lg:hidden text-text-primary hover:text-primary transition-colors">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <div>
+                            <h1 class="text-2xl font-bold text-text-primary" id="page-title">Loan Management</h1>
+                            <p class="text-sm text-text-secondary mt-1" id="page-subtitle">Manage and track all your loans</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Language Toggle -->
+                    <div class="flex items-center gap-2">
+                        <button class="lang-toggle active px-3 py-2 rounded-lg text-sm font-medium border border-border hover:bg-gray-50 transition-colors" data-lang="en">
+                            EN
+                        </button>
+                        <button class="lang-toggle px-3 py-2 rounded-lg text-sm font-medium border border-border hover:bg-gray-50 transition-colors" data-lang="bn">
+                            বাং
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Section -->
+        <div class="px-4 lg:px-8 py-6">
+            <!-- Search and Filter Bar -->
+            <div class="bg-white rounded-lg shadow-custom-sm border border-border p-4 mb-6">
+                <div class="flex flex-col lg:flex-row gap-4">
+                    <!-- Search Input -->
+                    <div class="flex-1 relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-text-tertiary"></i>
+                        <input 
+                            type="text" 
+                            id="searchInput"
+                            class="input pl-10"
+                            placeholder="Search by loan name or lender..."
+                        >
+                    </div>
+                    
+                    <!-- Filter Dropdown -->
+                    <div class="relative">
+                        <select id="statusFilter" class="input pr-10 cursor-pointer">
+                            <option value="all" id="filter-all">All Status</option>
+                            <option value="active" id="filter-active">Active</option>
+                            <option value="paid" id="filter-paid">Paid</option>
+                            <option value="overdue" id="filter-overdue">Overdue</option>
+                            <option value="pending" id="filter-pending">Pending</option>
+                        </select>
+                        <i class="fas fa-filter absolute right-3 top-1/2 transform -translate-y-1/2 text-text-tertiary pointer-events-none"></i>
+                    </div>
+                    
+                    <!-- Reset Button -->
+                    <button onclick="resetFilters()" class="btn-ghost flex items-center gap-2">
+                        <i class="fas fa-redo-alt"></i>
+                        <span id="reset-btn">Reset</span>
+                    </button>
+                    
+                    <!-- Add New Loan Button -->
+                    <a href="add_new_loan.html" class="btn-primary flex items-center gap-2 whitespace-nowrap">
+                        <i class="fas fa-plus"></i>
+                        <span id="add-loan-btn">Add New Loan</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Desktop Table View -->
+            <div class="desktop-table bg-white rounded-lg shadow-custom-sm border border-border overflow-hidden">
+                <div class="table-container">
+                    <table class="loan-table w-full">
+                        <thead class="bg-gray-50 border-b border-border">
+                            <tr>
+                                <th class="px-6 py-4 text-left">
+                                    <input type="checkbox" id="selectAll" class="w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer">
+                                </th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-text-primary">
+                                    <div class="flex items-center gap-2">
+                                        <span id="th-loan-name">Loan Name</span>
+                                        <i class="fas fa-sort sort-icon" data-sort="name"></i>
+                                    </div>
+                                </th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-text-primary">
+                                    <div class="flex items-center gap-2">
+                                        <span id="th-lender">Lender</span>
+                                        <i class="fas fa-sort sort-icon" data-sort="lender"></i>
+                                    </div>
+                                </th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-text-primary">
+                                    <div class="flex items-center gap-2">
+                                        <span id="th-principal">Principal Amount</span>
+                                        <i class="fas fa-sort sort-icon" data-sort="principal"></i>
+                                    </div>
+                                </th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-text-primary">
+                                    <span id="th-interest">Interest Rate</span>
+                                </th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-text-primary">
+                                    <div class="flex items-center gap-2">
+                                        <span id="th-remaining">Remaining Balance</span>
+                                        <i class="fas fa-sort sort-icon" data-sort="remaining"></i>
+                                    </div>
+                                </th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-text-primary">
+                                    <span id="th-status">Status</span>
+                                </th>
+                                <th class="px-6 py-4 text-center text-sm font-semibold text-text-primary">
+                                    <span id="th-actions">Actions</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="loanTableBody" class="divide-y divide-border">
+                            <!-- Loan rows will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Mobile Card View -->
+            <div id="mobileCards" class="mobile-card space-y-4">
+                <!-- Mobile cards will be inserted here by JavaScript -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden bg-white rounded-lg shadow-custom-sm border border-border p-12 text-center">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-primary-50 rounded-full mb-4">
+                    <i class="fas fa-hand-holding-usd text-4xl text-primary"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-text-primary mb-2" id="empty-title">No Loans Found</h3>
+                <p class="text-text-secondary mb-6" id="empty-subtitle">Start by adding your first loan to track payments and manage finances</p>
+                <a href="add_new_loan.html" class="btn-primary inline-flex items-center gap-2">
+                    <i class="fas fa-plus"></i>
+                    <span id="empty-add-btn">Add Your First Loan</span>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bulk Actions Bar -->
+    <div id="bulkActions" class="bulk-actions items-center gap-4">
+        <span class="text-sm font-medium text-text-primary">
+            <span id="selected-count">0</span> <span id="selected-text">selected</span>
+        </span>
+        <div class="flex items-center gap-2">
+            <button onclick="bulkDelete()" class="btn-ghost text-error hover:bg-error-light flex items-center gap-2">
+                <i class="fas fa-trash"></i>
+                <span id="bulk-delete-btn">Delete</span>
+            </button>
+            <button onclick="clearSelection()" class="btn-ghost flex items-center gap-2">
+                <i class="fas fa-times"></i>
+                <span id="bulk-cancel-btn">Cancel</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="delete-modal">
+        <div class="bg-white rounded-xl shadow-custom-lg max-w-md w-full mx-4 p-6 animate-scale-in">
+            <div class="flex items-start gap-4 mb-6">
+                <div class="flex-shrink-0 w-12 h-12 bg-error-light rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-error text-xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-text-primary mb-2" id="delete-title">Delete Loan?</h3>
+                    <p class="text-sm text-text-secondary" id="delete-message">
+                        Are you sure you want to delete this loan? This action cannot be undone and all payment history will be permanently removed.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3 justify-end">
+                <button onclick="closeDeleteModal()" class="btn-ghost" id="delete-cancel-btn">Cancel</button>
+                <button onclick="confirmDelete()" class="btn bg-error text-white hover:bg-red-700 focus:ring-error" id="delete-confirm-btn">
+                    <i class="fas fa-trash mr-2"></i>
+                    Delete Loan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Language translations
+        const translations = {
+            en: {
+                'nav-dashboard': 'Dashboard',
+                'nav-loans': 'My Loans',
+                'nav-payments': 'Payment History',
+                'nav-reports': 'Reports',
+                'nav-settings': 'Settings',
+                'page-title': 'Loan Management',
+                'page-subtitle': 'Manage and track all your loans',
+                'filter-all': 'All Status',
+                'filter-active': 'Active',
+                'filter-paid': 'Paid',
+                'filter-overdue': 'Overdue',
+                'filter-pending': 'Pending',
+                'reset-btn': 'Reset',
+                'add-loan-btn': 'Add New Loan',
+                'th-loan-name': 'Loan Name',
+                'th-lender': 'Lender',
+                'th-principal': 'Principal Amount',
+                'th-interest': 'Interest Rate',
+                'th-remaining': 'Remaining Balance',
+                'th-status': 'Status',
+                'th-actions': 'Actions',
+                'empty-title': 'No Loans Found',
+                'empty-subtitle': 'Start by adding your first loan to track payments and manage finances',
+                'empty-add-btn': 'Add Your First Loan',
+                'selected-text': 'selected',
+                'bulk-delete-btn': 'Delete',
+                'bulk-cancel-btn': 'Cancel',
+                'delete-title': 'Delete Loan?',
+                'delete-message': 'Are you sure you want to delete this loan? This action cannot be undone and all payment history will be permanently removed.',
+                'delete-cancel-btn': 'Cancel',
+                'delete-confirm-btn': 'Delete Loan',
+                'status-active': 'Active',
+                'status-paid': 'Paid',
+                'status-overdue': 'Overdue',
+                'status-pending': 'Pending'
+            },
+            bn: {
+                'nav-dashboard': 'ড্যাশবোর্ড',
+                'nav-loans': 'আমার ঋণ',
+                'nav-payments': 'পেমেন্ট ইতিহাস',
+                'nav-reports': 'রিপোর্ট',
+                'nav-settings': 'সেটিংস',
+                'page-title': 'ঋণ ব্যবস্থাপনা',
+                'page-subtitle': 'আপনার সমস্ত ঋণ পরিচালনা এবং ট্র্যাক করুন',
+                'filter-all': 'সব স্ট্যাটাস',
+                'filter-active': 'সক্রিয়',
+                'filter-paid': 'পরিশোধিত',
+                'filter-overdue': 'বকেয়া',
+                'filter-pending': 'মুলতুবি',
+                'reset-btn': 'রিসেট',
+                'add-loan-btn': 'নতুন ঋণ যোগ করুন',
+                'th-loan-name': 'ঋণের নাম',
+                'th-lender': 'ঋণদাতা',
+                'th-principal': 'মূল পরিমাণ',
+                'th-interest': 'সুদের হার',
+                'th-remaining': 'অবশিষ্ট ব্যালেন্স',
+                'th-status': 'স্ট্যাটাস',
+                'th-actions': 'কার্যক্রম',
+                'empty-title': 'কোন ঋণ পাওয়া যায়নি',
+                'empty-subtitle': 'পেমেন্ট ট্র্যাক এবং অর্থ পরিচালনা করতে আপনার প্রথম ঋণ যোগ করে শুরু করুন',
+                'empty-add-btn': 'আপনার প্রথম ঋণ যোগ করুন',
+                'selected-text': 'নির্বাচিত',
+                'bulk-delete-btn': 'মুছুন',
+                'bulk-cancel-btn': 'বাতিল',
+                'delete-title': 'ঋণ মুছবেন?',
+                'delete-message': 'আপনি কি নিশ্চিত যে আপনি এই ঋণটি মুছতে চান? এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না এবং সমস্ত পেমেন্ট ইতিহাস স্থায়ীভাবে সরানো হবে।',
+                'delete-cancel-btn': 'বাতিল',
+                'delete-confirm-btn': 'ঋণ মুছুন',
+                'status-active': 'সক্রিয়',
+                'status-paid': 'পরিশোধিত',
+                'status-overdue': 'বকেয়া',
+                'status-pending': 'মুলতুবি'
+            }
+        };
+
+        let currentLang = localStorage.getItem('language') || 'en';
+        let currentSort = { field: null, direction: 'asc' };
+        let selectedLoans = new Set();
+        let loanToDelete = null;
+
+        // Mock loan data
+        const mockLoans = [
+            {
+                id: 1,
+                name: 'Home Renovation Loan',
+                lender: 'Md. Rahman',
+                principal: 500000,
+                interestRate: 8.5,
+                remainingBalance: 375000,
+                status: 'active',
+                startDate: '2024-01-15',
+                term: 36
+            },
+            {
+                id: 2,
+                name: 'Business Expansion',
+                lender: 'Fatima Begum',
+                principal: 1000000,
+                interestRate: 10.0,
+                remainingBalance: 850000,
+                status: 'active',
+                startDate: '2024-03-01',
+                term: 48
+            },
+            {
+                id: 3,
+                name: 'Car Purchase Loan',
+                lender: 'Abdul Karim',
+                principal: 300000,
+                interestRate: 12.0,
+                remainingBalance: 0,
+                status: 'paid',
+                startDate: '2023-06-10',
+                term: 24
+            },
+            {
+                id: 4,
+                name: 'Education Loan',
+                lender: 'Nasrin Akter',
+                principal: 250000,
+                interestRate: 7.5,
+                remainingBalance: 225000,
+                status: 'overdue',
+                startDate: '2024-02-20',
+                term: 60
+            },
+            {
+                id: 5,
+                name: 'Medical Emergency',
+                lender: 'Kamal Hossain',
+                principal: 150000,
+                interestRate: 9.0,
+                remainingBalance: 120000,
+                status: 'pending',
+                startDate: '2024-10-01',
+                term: 12
+            },
+            {
+                id: 6,
+                name: 'Wedding Expenses',
+                lender: 'Ayesha Siddiqua',
+                principal: 400000,
+                interestRate: 11.5,
+                remainingBalance: 320000,
+                status: 'active',
+                startDate: '2024-05-15',
+                term: 24
+            }
+        ];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserInfo();
+            renderLoans(mockLoans);
+            setupEventListeners();
+            updateLanguage();
+        });
+
+        // Language toggle
+        document.querySelectorAll('.lang-toggle').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.lang-toggle').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentLang = this.dataset.lang;
+                localStorage.setItem('language', currentLang);
+                updateLanguage();
+                renderLoans(getFilteredLoans());
+            });
+        });
+
+        function updateLanguage() {
+            const trans = translations[currentLang];
+            Object.keys(trans).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    if (element.tagName === 'INPUT' || element.tagName === 'SELECT') {
+                        element.placeholder = trans[key];
+                    } else {
+                        element.textContent = trans[key];
+                    }
+                }
+            });
+            
+            // Update search placeholder
+            document.getElementById('searchInput').placeholder = currentLang === 'en' 
+                ? 'Search by loan name or lender...' 
+                : 'ঋণের নাম বা ঋণদাতা দ্বারা অনুসন্ধান করুন...';
+        }
+
+        function loadUserInfo() {
+            const googleUser = localStorage.getItem('googleUser');
+            if (googleUser) {
+                const user = JSON.parse(googleUser);
+                document.getElementById('user-name').textContent = user.name;
+                document.getElementById('user-email').textContent = user.email;
+            }
+        }
+
+        function formatCurrency(amount) {
+            if (currentLang === 'bn') {
+                return '৳ ' + amount.toLocaleString('bn-BD');
+            }
+            return '৳ ' + amount.toLocaleString('en-US');
+        }
+
+        function getStatusBadge(status) {
+            const statusText = translations[currentLang][`status-${status}`];
+            const statusClasses = {
+                active: 'status-active',
+                paid: 'status-paid',
+                overdue: 'status-overdue',
+                pending: 'status-pending'
+            };
+            
+            const icons = {
+                active: 'fa-circle',
+                paid: 'fa-check-circle',
+                overdue: 'fa-exclamation-circle',
+                pending: 'fa-clock'
+            };
+            
+            return `
+                <span class="status-badge ${statusClasses[status]}">
+                    <i class="fas ${icons[status]}"></i>
+                    ${statusText}
+                </span>
+            `;
+        }
+
+        function renderLoans(loans) {
+            const tableBody = document.getElementById('loanTableBody');
+            const mobileCards = document.getElementById('mobileCards');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (loans.length === 0) {
+                tableBody.innerHTML = '';
+                mobileCards.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            // Desktop table rows
+            tableBody.innerHTML = loans.map(loan => `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4">
+                        <input type="checkbox" class="loan-checkbox w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer" data-loan-id="${loan.id}">
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-text-primary">${loan.name}</div>
+                        <div class="text-sm text-text-secondary mt-1">${currentLang === 'en' ? 'Started' : 'শুরু'}: ${formatDate(loan.startDate)}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-primary text-sm"></i>
+                            </div>
+                            <span class="text-text-primary">${loan.lender}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="font-mono font-medium text-text-primary">${formatCurrency(loan.principal)}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-text-primary">${loan.interestRate}%</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="font-mono font-medium ${loan.remainingBalance === 0 ? 'text-success' : 'text-text-primary'}">${formatCurrency(loan.remainingBalance)}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        ${getStatusBadge(loan.status)}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="viewLoanDetails(${loan.id})" class="action-btn bg-primary-50 text-primary hover:bg-primary-100" title="${currentLang === 'en' ? 'View Details' : 'বিস্তারিত দেখুন'}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <a href="payment_recording_modal.html?loanId=${loan.id}" class="action-btn bg-accent-50 text-accent hover:bg-accent-100" title="${currentLang === 'en' ? 'Record Payment' : 'পেমেন্ট রেকর্ড করুন'}">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </a>
+                            <a href="payment_history.html?loanId=${loan.id}" class="action-btn bg-secondary-50 text-secondary hover:bg-secondary-100" title="${currentLang === 'en' ? 'Payment History' : 'পেমেন্ট ইতিহাস'}">
+                                <i class="fas fa-history"></i>
+                            </a>
+                            <button onclick="openDeleteModal(${loan.id})" class="action-btn bg-error-light text-error hover:bg-red-200" title="${currentLang === 'en' ? 'Delete Loan' : 'ঋণ মুছুন'}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            
+            // Mobile cards
+            mobileCards.innerHTML = loans.map(loan => `
+                <div class="card">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-start gap-3 flex-1">
+                            <input type="checkbox" class="loan-checkbox mt-1 w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer" data-loan-id="${loan.id}">
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-text-primary mb-1">${loan.name}</h3>
+                                <div class="flex items-center gap-2 text-sm text-text-secondary">
+                                    <i class="fas fa-user text-xs"></i>
+                                    <span>${loan.lender}</span>
+                                </div>
+                            </div>
+                        </div>
+                        ${getStatusBadge(loan.status)}
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <p class="text-xs text-text-secondary mb-1">${currentLang === 'en' ? 'Principal' : 'মূল পরিমাণ'}</p>
+                            <p class="font-mono font-medium text-text-primary">${formatCurrency(loan.principal)}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-text-secondary mb-1">${currentLang === 'en' ? 'Remaining' : 'অবশিষ্ট'}</p>
+                            <p class="font-mono font-medium ${loan.remainingBalance === 0 ? 'text-success' : 'text-text-primary'}">${formatCurrency(loan.remainingBalance)}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-text-secondary mb-1">${currentLang === 'en' ? 'Interest Rate' : 'সুদের হার'}</p>
+                            <p class="text-text-primary">${loan.interestRate}%</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-text-secondary mb-1">${currentLang === 'en' ? 'Start Date' : 'শুরুর তারিখ'}</p>
+                            <p class="text-text-primary">${formatDate(loan.startDate)}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 pt-4 border-t border-border">
+                        <button onclick="viewLoanDetails(${loan.id})" class="btn-ghost flex-1 text-sm">
+                            <i class="fas fa-eye mr-2"></i>
+                            ${currentLang === 'en' ? 'Details' : 'বিস্তারিত'}
+                        </button>
+                        <a href="payment_recording_modal.html?loanId=${loan.id}" class="btn-primary flex-1 text-sm">
+                            <i class="fas fa-money-bill-wave mr-2"></i>
+                            ${currentLang === 'en' ? 'Pay' : 'পরিশোধ'}
+                        </a>
+                        <button onclick="openDeleteModal(${loan.id})" class="action-btn bg-error-light text-error hover:bg-red-200">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Setup checkbox listeners
+            document.querySelectorAll('.loan-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', handleCheckboxChange);
+            });
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            if (currentLang === 'bn') {
+                return date.toLocaleDateString('bn-BD');
+            }
+            return date.toLocaleDateString('en-GB');
+        }
+
+        function setupEventListeners() {
+            // Search functionality
+            document.getElementById('searchInput').addEventListener('input', function(e) {
+                renderLoans(getFilteredLoans());
+            });
+            
+            // Filter functionality
+            document.getElementById('statusFilter').addEventListener('change', function(e) {
+                renderLoans(getFilteredLoans());
+            });
+            
+            // Sort functionality
+            document.querySelectorAll('.sort-icon').forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const field = this.dataset.sort;
+                    if (currentSort.field === field) {
+                        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSort.field = field;
+                        currentSort.direction = 'asc';
+                    }
+                    
+                    document.querySelectorAll('.sort-icon').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    renderLoans(getFilteredLoans());
+                });
+            });
+            
+            // Select all checkbox
+            document.getElementById('selectAll').addEventListener('change', function(e) {
+                const checkboxes = document.querySelectorAll('.loan-checkbox');
+                checkboxes.forEach(cb => {
+                    cb.checked = e.target.checked;
+                    if (e.target.checked) {
+                        selectedLoans.add(parseInt(cb.dataset.loanId));
+                    } else {
+                        selectedLoans.delete(parseInt(cb.dataset.loanId));
+                    }
+                });
+                updateBulkActions();
+            });
+        }
+
+        function handleCheckboxChange(e) {
+            const loanId = parseInt(e.target.dataset.loanId);
+            if (e.target.checked) {
+                selectedLoans.add(loanId);
+            } else {
+                selectedLoans.delete(loanId);
+            }
+            updateBulkActions();
+        }
+
+        function updateBulkActions() {
+            const bulkActions = document.getElementById('bulkActions');
+            const selectedCount = document.getElementById('selected-count');
+            
+            if (selectedLoans.size > 0) {
+                bulkActions.classList.add('active');
+                selectedCount.textContent = selectedLoans.size;
+            } else {
+                bulkActions.classList.remove('active');
+            }
+        }
+
+        function getFilteredLoans() {
+            let filtered = [...mockLoans];
+            
+            // Apply search filter
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (searchTerm) {
+                filtered = filtered.filter(loan => 
+                    loan.name.toLowerCase().includes(searchTerm) ||
+                    loan.lender.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // Apply status filter
+            const statusFilter = document.getElementById('statusFilter').value;
+            if (statusFilter !== 'all') {
+                filtered = filtered.filter(loan => loan.status === statusFilter);
+            }
+            
+            // Apply sorting
+            if (currentSort.field) {
+                filtered.sort((a, b) => {
+                    let aVal = a[currentSort.field];
+                    let bVal = b[currentSort.field];
+                    
+                    if (typeof aVal === 'string') {
+                        aVal = aVal.toLowerCase();
+                        bVal = bVal.toLowerCase();
+                    }
+                    
+                    if (currentSort.direction === 'asc') {
+                        return aVal > bVal ? 1 : -1;
+                    } else {
+                        return aVal < bVal ? 1 : -1;
+                    }
+                });
+            }
+            
+            return filtered;
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statusFilter').value = 'all';
+            currentSort = { field: null, direction: 'asc' };
+            document.querySelectorAll('.sort-icon').forEach(i => i.classList.remove('active'));
+            renderLoans(mockLoans);
+        }
+
+        function clearSelection() {
+            selectedLoans.clear();
+            document.querySelectorAll('.loan-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById('selectAll').checked = false;
+            updateBulkActions();
+        }
+
+        function bulkDelete() {
+            if (selectedLoans.size === 0) return;
+            
+            const confirmMsg = currentLang === 'en' 
+                ? `Are you sure you want to delete ${selectedLoans.size} loan(s)?`
+                : `আপনি কি নিশ্চিত যে আপনি ${selectedLoans.size}টি ঋণ মুছতে চান?`;
+            
+            if (confirm(confirmMsg)) {
+                // In real app, this would make API calls
+                console.log('Deleting loans:', Array.from(selectedLoans));
+                clearSelection();
+                // Refresh the list
+                renderLoans(getFilteredLoans());
+            }
+        }
+
+        function openDeleteModal(loanId) {
+            loanToDelete = loanId;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        function closeDeleteModal() {
+            loanToDelete = null;
+            document.getElementById('deleteModal').classList.remove('active');
+        }
+
+        function confirmDelete() {
+            if (loanToDelete) {
+                // In real app, this would make an API call
+                console.log('Deleting loan:', loanToDelete);
+                const index = mockLoans.findIndex(l => l.id === loanToDelete);
+                if (index > -1) {
+                    mockLoans.splice(index, 1);
+                }
+                closeDeleteModal();
+                renderLoans(getFilteredLoans());
+            }
+        }
+
+        function viewLoanDetails(loanId) {
+            // In real app, this would navigate to loan details page
+            console.log('Viewing loan details:', loanId);
+            alert(currentLang === 'en' 
+                ? 'Loan details view would open here'
+                : 'ঋণের বিস্তারিত এখানে খুলবে');
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const mainContent = document.getElementById('mainContent');
+            
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            
+            if (window.innerWidth >= 1024) {
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+            }
+        }
+
+        function logout() {
+            if (confirm(currentLang === 'en' ? 'Are you sure you want to logout?' : 'আপনি কি নিশ্চিত যে আপনি লগআউট করতে চান?')) {
+                localStorage.removeItem('isAuthenticated');
+                localStorage.removeItem('authMethod');
+                localStorage.removeItem('googleUser');
+                window.location.href = 'login_authentication.html';
+            }
+        }
+
+        // Check authentication
+        if (localStorage.getItem('isAuthenticated') !== 'true') {
+            window.location.href = 'login_authentication.html';
+        }
+
+        // Set active language on load
+        const savedLang = localStorage.getItem('language') || 'en';
+        document.querySelector(`[data-lang="${savedLang}"]`).classList.add('active');
+    </script>
+<script id="dhws-dataInjector" src="../public/dhws-data-injector.js"></script>
+</body>
+</html>

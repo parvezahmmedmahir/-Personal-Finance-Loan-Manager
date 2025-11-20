@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Settings - ALI Finance Manager</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .sidebar {
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar-mobile {
+            transform: translateX(-100%);
+        }
+        
+        .sidebar-mobile.active {
+            transform: translateX(0);
+        }
+        
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+        }
+        
+        .overlay.active {
+            display: block;
+        }
+
+        .settings-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            cursor: pointer;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: 0.3s;
+            border-radius: 28px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #1e3a8a;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        .time-picker {
+            appearance: none;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        .frequency-option {
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .frequency-option:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .frequency-option.active {
+            border-color: #1e3a8a;
+            background: #dbeafe;
+            color: #1e40af;
+            font-weight: 600;
+        }
+
+        .notification-preview {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 16px;
+        }
+
+        .permission-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .permission-granted {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .permission-denied {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+    </style>
+  
+  <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Falifinanc7595back.builtwithrocket.new&_be=https%3A%2F%2Fapplication.rocket.new&_v=0.1.10"></script>
+  <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.1"></script>
+  </head>
+<body class="bg-background">
+    <!-- Mobile Overlay -->
+    <div class="overlay" id="mobileOverlay"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar fixed top-0 left-0 h-full w-64 bg-primary text-white z-50 sidebar-mobile lg:translate-x-0" id="sidebar">
+        <div class="p-6 border-b border-primary-800">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                    <i class="fas fa-wallet text-primary text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="font-bold text-lg" id="appName">ALI Finance</h2>
+                    <p class="text-xs text-primary-200" id="appTagline">Manage Your Loans</p>
+                </div>
+            </div>
+        </div>
+
+        <nav class="p-4 space-y-2">
+            <a href="financial_dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-primary-800 transition-colors">
+                <i class="fas fa-chart-line w-5"></i>
+                <span id="navDashboard">Dashboard</span>
+            </a>
+            <a href="loan_management.html" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-primary-800 transition-colors">
+                <i class="fas fa-hand-holding-usd w-5"></i>
+                <span id="navLoans">My Loans</span>
+            </a>
+            <a href="payment_history.html" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-primary-800 transition-colors">
+                <i class="fas fa-history w-5"></i>
+                <span id="navPayments">Payment History</span>
+            </a>
+            <a href="contact_management.html" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-primary-800 transition-colors">
+                <i class="fas fa-address-book w-5"></i>
+                <span id="navContacts">Contacts</span>
+            </a>
+            <a href="notification_settings.html" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary-800 text-white">
+                <i class="fas fa-bell w-5"></i>
+                <span id="navNotifications">Notifications</span>
+            </a>
+            <a href="javascript:void(0)" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-primary-800 transition-colors">
+                <i class="fas fa-cog w-5"></i>
+                <span id="navSettings">Settings</span>
+            </a>
+        </nav>
+
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-primary-800">
+            <button id="logoutBtn" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-primary-800 transition-colors text-left">
+                <i class="fas fa-sign-out-alt w-5"></i>
+                <span id="navLogout">Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="lg:ml-64 min-h-screen">
+        <!-- Header -->
+        <header class="bg-white border-b border-border sticky top-0 z-30">
+            <div class="flex items-center justify-between px-4 lg:px-8 py-4">
+                <div class="flex items-center gap-4">
+                    <button id="menuToggle" class="lg:hidden text-text-primary hover:text-primary transition-colors">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <div>
+                        <h1 class="text-2xl font-bold text-primary" id="pageTitle">Notification Settings</h1>
+                        <p class="text-sm text-text-secondary" id="pageSubtitle">Configure payment reminders and alerts</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <!-- Language Toggle -->
+                    <div class="flex gap-2" id="languageToggle">
+                        <button class="lang-btn active px-3 py-2 rounded-lg text-sm font-medium border border-border transition-colors" data-lang="en">
+                            EN
+                        </button>
+                        <button class="lang-btn px-3 py-2 rounded-lg text-sm font-medium border border-border transition-colors" data-lang="bn">
+                            বাং
+                        </button>
+                    </div>
+
+                    <!-- User Profile -->
+                    <div class="flex items-center gap-3">
+                        <img 
+                            src="https://images.unsplash.com/photo-1629525526541-02606b575fdf" 
+                            alt="User profile picture"
+                            class="w-10 h-10 rounded-full border-2 border-primary"
+                            onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'; this.onerror=null;"
+                        >
+                        <div class="hidden md:block">
+                            <p class="text-sm font-medium text-text-primary" id="userName">User Name</p>
+                            <p class="text-xs text-text-secondary" id="userEmail">user@example.com</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Settings Content -->
+        <div class="p-4 lg:p-8 space-y-6">
+            <!-- Permission Status -->
+            <section class="settings-section animate-fade-in">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-text-primary" id="permissionTitle">Notification Permission</h2>
+                        <p class="text-sm text-text-secondary mt-1" id="permissionSubtitle">Allow notifications to receive payment reminders</p>
+                    </div>
+                    <span class="permission-status permission-granted" id="permissionStatus">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="permissionText">Granted</span>
+                    </span>
+                </div>
+                <button onclick="requestNotificationPermission()" class="btn-secondary" id="enableNotificationsBtn">
+                    <i class="fas fa-bell mr-2"></i>
+                    <span id="enableText">Enable Notifications</span>
+                </button>
+            </section>
+
+            <!-- Daily Payment Reminders -->
+            <section class="settings-section animate-fade-in" style="animation-delay: 0.1s;">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-lg font-bold text-text-primary" id="dailyReminderTitle">Daily Payment Reminder</h2>
+                        <p class="text-sm text-text-secondary mt-1" id="dailyReminderSubtitle">Get notified daily at a specific time</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="dailyReminderToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div id="dailyReminderOptions">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-text-primary mb-2" id="reminderTimeLabel">Reminder Time</label>
+                        <input type="time" id="reminderTime" class="time-picker" value="10:00">
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="frequency-option active" data-days="1">
+                            <p class="text-sm" id="option1Day">1 Day Before</p>
+                        </div>
+                        <div class="frequency-option" data-days="3">
+                            <p class="text-sm" id="option3Days">3 Days Before</p>
+                        </div>
+                        <div class="frequency-option" data-days="5">
+                            <p class="text-sm" id="option5Days">5 Days Before</p>
+                        </div>
+                        <div class="frequency-option" data-days="7">
+                            <p class="text-sm" id="option7Days">7 Days Before</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Notification Types -->
+            <section class="settings-section animate-fade-in" style="animation-delay: 0.2s;">
+                <h2 class="text-lg font-bold text-text-primary mb-4" id="notificationTypesTitle">Notification Types</h2>
+                
+                <div class="space-y-4">
+                    <!-- Upcoming Payments -->
+                    <div class="flex items-center justify-between p-4 border border-border rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-calendar-check text-primary"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-text-primary" id="upcomingPaymentsLabel">Upcoming Payments</p>
+                                <p class="text-sm text-text-secondary" id="upcomingPaymentsDesc">Notify before payment due dates</p>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="upcomingPaymentsToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <!-- Overdue Alerts -->
+                    <div class="flex items-center justify-between p-4 border border-border rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-error-light rounded-lg flex items-center justify-center">
+                                <i class="fas fa-exclamation-triangle text-error"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-text-primary" id="overdueAlertsLabel">Overdue Alerts</p>
+                                <p class="text-sm text-text-secondary" id="overdueAlertsDesc">Daily reminders for overdue payments</p>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="overdueAlertsToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <!-- Payment Confirmations -->
+                    <div class="flex items-center justify-between p-4 border border-border rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-accent-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-check-circle text-accent"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-text-primary" id="paymentConfirmationsLabel">Payment Confirmations</p>
+                                <p class="text-sm text-text-secondary" id="paymentConfirmationsDesc">Notify when payment is recorded</p>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="paymentConfirmationsToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <!-- Loan Completion -->
+                    <div class="flex items-center justify-between p-4 border border-border rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-accent-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-trophy text-accent"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-text-primary" id="loanCompletionLabel">Loan Completion</p>
+                                <p class="text-sm text-text-secondary" id="loanCompletionDesc">Celebrate when a loan is fully paid</p>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="loanCompletionToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Notification Sound & Vibration -->
+            <section class="settings-section animate-fade-in" style="animation-delay: 0.3s;">
+                <h2 class="text-lg font-bold text-text-primary mb-4" id="soundVibrationTitle">Sound & Vibration</h2>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-medium text-text-primary" id="notificationSoundLabel">Notification Sound</p>
+                            <p class="text-sm text-text-secondary" id="notificationSoundDesc">Play sound for notifications</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="soundToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-medium text-text-primary" id="vibrationLabel">Vibration</p>
+                            <p class="text-sm text-text-secondary" id="vibrationDesc">Vibrate for notifications</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="vibrationToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Notification Preview -->
+            <section class="settings-section animate-fade-in" style="animation-delay: 0.4s;">
+                <h2 class="text-lg font-bold text-text-primary mb-4" id="previewTitle">Preview Notification</h2>
+                <p class="text-sm text-text-secondary mb-4" id="previewDesc">Test how your notifications will look</p>
+                
+                <div class="notification-preview">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-wallet text-white"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-semibold text-white mb-1" id="previewAppName">ALI Finance Manager</p>
+                            <p class="text-white text-opacity-90 mb-2" id="previewMessage">Payment reminder: ৳ 15,000 due to Yusuf on Nov 25, 2025</p>
+                            <p class="text-xs text-white text-opacity-75" id="previewTime">10:00 AM</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="sendTestNotification()" class="btn-secondary mt-4 w-full">
+                    <i class="fas fa-paper-plane mr-2"></i>
+                    <span id="sendTestBtn">Send Test Notification</span>
+                </button>
+            </section>
+
+            <!-- Save Settings Button -->
+            <div class="flex gap-4">
+                <button onclick="saveSettings()" class="btn-primary flex-1">
+                    <i class="fas fa-save mr-2"></i>
+                    <span id="saveSettingsBtn">Save Settings</span>
+                </button>
+                <button onclick="resetToDefaults()" class="btn-secondary">
+                    <i class="fas fa-undo mr-2"></i>
+                    <span id="resetBtn">Reset</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Language translations
+        const translations = {
+            en: {
+                appName: 'ALI Finance',
+                appTagline: 'Manage Your Loans',
+                navDashboard: 'Dashboard',
+                navLoans: 'My Loans',
+                navPayments: 'Payment History',
+                navContacts: 'Contacts',
+                navNotifications: 'Notifications',
+                navSettings: 'Settings',
+                navLogout: 'Logout',
+                pageTitle: 'Notification Settings',
+                pageSubtitle: 'Configure payment reminders and alerts',
+                permissionTitle: 'Notification Permission',
+                permissionSubtitle: 'Allow notifications to receive payment reminders',
+                permissionText: 'Granted',
+                enableText: 'Enable Notifications',
+                dailyReminderTitle: 'Daily Payment Reminder',
+                dailyReminderSubtitle: 'Get notified daily at a specific time',
+                reminderTimeLabel: 'Reminder Time',
+                option1Day: '1 Day Before',
+                option3Days: '3 Days Before',
+                option5Days: '5 Days Before',
+                option7Days: '7 Days Before',
+                notificationTypesTitle: 'Notification Types',
+                upcomingPaymentsLabel: 'Upcoming Payments',
+                upcomingPaymentsDesc: 'Notify before payment due dates',
+                overdueAlertsLabel: 'Overdue Alerts',
+                overdueAlertsDesc: 'Daily reminders for overdue payments',
+                paymentConfirmationsLabel: 'Payment Confirmations',
+                paymentConfirmationsDesc: 'Notify when payment is recorded',
+                loanCompletionLabel: 'Loan Completion',
+                loanCompletionDesc: 'Celebrate when a loan is fully paid',
+                soundVibrationTitle: 'Sound & Vibration',
+                notificationSoundLabel: 'Notification Sound',
+                notificationSoundDesc: 'Play sound for notifications',
+                vibrationLabel: 'Vibration',
+                vibrationDesc: 'Vibrate for notifications',
+                previewTitle: 'Preview Notification',
+                previewDesc: 'Test how your notifications will look',
+                previewAppName: 'ALI Finance Manager',
+                previewMessage: 'Payment reminder: ৳ 15,000 due to Yusuf on Nov 25, 2025',
+                previewTime: '10:00 AM',
+                sendTestBtn: 'Send Test Notification',
+                saveSettingsBtn: 'Save Settings',
+                resetBtn: 'Reset'
+            },
+            bn: {
+                appName: 'এএলআই ফাইন্যান্স',
+                appTagline: 'আপনার ঋণ পরিচালনা করুন',
+                navDashboard: 'ড্যাশবোর্ড',
+                navLoans: 'আমার ঋণ',
+                navPayments: 'পেমেন্ট ইতিহাস',
+                navContacts: 'যোগাযোগ',
+                navNotifications: 'বিজ্ঞপ্তি',
+                navSettings: 'সেটিংস',
+                navLogout: 'লগআউট',
+                pageTitle: 'বিজ্ঞপ্তি সেটিংস',
+                pageSubtitle: 'পেমেন্ট রিমাইন্ডার এবং সতর্কতা কনফিগার করুন',
+                permissionTitle: 'বিজ্ঞপ্তি অনুমতি',
+                permissionSubtitle: 'পেমেন্ট রিমাইন্ডার পেতে বিজ্ঞপ্তি অনুমোদন করুন',
+                permissionText: 'অনুমোদিত',
+                enableText: 'বিজ্ঞপ্তি সক্ষম করুন',
+                dailyReminderTitle: 'দৈনিক পেমেন্ট রিমাইন্ডার',
+                dailyReminderSubtitle: 'নির্দিষ্ট সময়ে প্রতিদিন বিজ্ঞপ্তি পান',
+                reminderTimeLabel: 'রিমাইন্ডার সময়',
+                option1Day: '১ দিন আগে',
+                option3Days: '৩ দিন আগে',
+                option5Days: '৫ দিন আগে',
+                option7Days: '৭ দিন আগে',
+                notificationTypesTitle: 'বিজ্ঞপ্তির ধরন',
+                upcomingPaymentsLabel: 'আসন্ন পেমেন্ট',
+                upcomingPaymentsDesc: 'পেমেন্টের তারিখের আগে বিজ্ঞপ্তি',
+                overdueAlertsLabel: 'বাকি সতর্কতা',
+                overdueAlertsDesc: 'বাকি পেমেন্টের জন্য দৈনিক রিমাইন্ডার',
+                paymentConfirmationsLabel: 'পেমেন্ট নিশ্চিতকরণ',
+                paymentConfirmationsDesc: 'পেমেন্ট রেকর্ড করার সময় বিজ্ঞপ্তি',
+                loanCompletionLabel: 'ঋণ সমাপ্তি',
+                loanCompletionDesc: 'ঋণ সম্পূর্ণ পরিশোধিত হলে উদযাপন করুন',
+                soundVibrationTitle: 'সাউন্ড এবং ভাইব্রেশন',
+                notificationSoundLabel: 'বিজ্ঞপ্তি সাউন্ড',
+                notificationSoundDesc: 'বিজ্ঞপ্তির জন্য সাউন্ড চালান',
+                vibrationLabel: 'ভাইব্রেশন',
+                vibrationDesc: 'বিজ্ঞপ্তির জন্য ভাইব্রেট করুন',
+                previewTitle: 'বিজ্ঞপ্তি প্রিভিউ',
+                previewDesc: 'আপনার বিজ্ঞপ্তি কেমন দেখাবে পরীক্ষা করুন',
+                previewAppName: 'এএলআই ফাইন্যান্স ম্যানেজার',
+                previewMessage: 'পেমেন্ট রিমাইন্ডার: ইউসুফকে ২৫ নভেম্বর, ২০২৫ এ ৳ ১৫,০০০ দিতে হবে',
+                previewTime: 'সকাল ১০:০০',
+                sendTestBtn: 'পরীক্ষা বিজ্ঞপ্তি পাঠান',
+                saveSettingsBtn: 'সেটিংস সংরক্ষণ করুন',
+                resetBtn: 'রিসেট'
+            }
+        };
+
+        let currentLang = 'en';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication
+            if (localStorage.getItem('isAuthenticated') !== 'true') {
+                window.location.href = 'login_authentication.html';
+                return;
+            }
+
+            // Load user data
+            loadUserData();
+
+            // Load saved language
+            const savedLang = localStorage.getItem('language') || 'en';
+            if (savedLang !== 'en') {
+                currentLang = savedLang;
+                document.querySelector(`[data-lang="${savedLang}"]`).click();
+            }
+
+            // Load saved settings
+            loadSettings();
+
+            // Setup event listeners
+            setupEventListeners();
+
+            // Check notification permission
+            checkNotificationPermission();
+        });
+
+        // Language toggle
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.lang-btn').forEach(b => {
+                    b.classList.remove('active', 'bg-primary', 'text-white');
+                    b.classList.add('hover:bg-gray-100');
+                });
+                this.classList.add('active', 'bg-primary', 'text-white');
+                this.classList.remove('hover:bg-gray-100');
+                currentLang = this.dataset.lang;
+                localStorage.setItem('language', currentLang);
+                updateLanguage();
+            });
+        });
+
+        function updateLanguage() {
+            const trans = translations[currentLang];
+            Object.keys(trans).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.textContent = trans[key];
+                }
+            });
+        }
+
+        function loadUserData() {
+            const googleUser = localStorage.getItem('googleUser');
+            if (googleUser) {
+                const user = JSON.parse(googleUser);
+                document.getElementById('userName').textContent = user.name;
+                document.getElementById('userEmail').textContent = user.email;
+                document.querySelector('img[alt="User profile picture"]').src = user.picture;
+            }
+        }
+
+        // Mobile menu toggle
+        document.getElementById('menuToggle').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('sidebar-mobile');
+            document.getElementById('mobileOverlay').classList.toggle('active');
+        });
+
+        document.getElementById('mobileOverlay').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.add('sidebar-mobile');
+            this.classList.remove('active');
+        });
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            if (confirm(currentLang === 'en' ? 'Are you sure you want to logout?' : 'আপনি কি লগআউট করতে চান?')) {
+                localStorage.removeItem('isAuthenticated');
+                localStorage.removeItem('authMethod');
+                localStorage.removeItem('googleUser');
+                window.location.href = 'login_authentication.html';
+            }
+        });
+
+        function setupEventListeners() {
+            // Frequency options
+            document.querySelectorAll('.frequency-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.frequency-option').forEach(o => o.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
+            // Daily reminder toggle
+            document.getElementById('dailyReminderToggle').addEventListener('change', function() {
+                const options = document.getElementById('dailyReminderOptions');
+                if (this.checked) {
+                    options.style.display = 'block';
+                } else {
+                    options.style.display = 'none';
+                }
+            });
+        }
+
+        function checkNotificationPermission() {
+            if ('Notification' in window) {
+                const permission = Notification.permission;
+                const statusElement = document.getElementById('permissionStatus');
+                const textElement = document.getElementById('permissionText');
+
+                if (permission === 'granted') {
+                    statusElement.className = 'permission-status permission-granted';
+                    statusElement.innerHTML = '<i class="fas fa-check-circle"></i><span>' + 
+                        (currentLang === 'en' ? 'Granted' : 'অনুমোদিত') + '</span>';
+                } else {
+                    statusElement.className = 'permission-status permission-denied';
+                    statusElement.innerHTML = '<i class="fas fa-times-circle"></i><span>' + 
+                        (currentLang === 'en' ? 'Denied' : 'অস্বীকৃত') + '</span>';
+                }
+            }
+        }
+
+        function requestNotificationPermission() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    checkNotificationPermission();
+                    if (permission === 'granted') {
+                        alert(currentLang === 'en' 
+                            ? 'Notifications enabled successfully!' 
+                            : 'বিজ্ঞপ্তি সফলভাবে সক্ষম করা হয়েছে!');
+                    }
+                });
+            } else {
+                alert(currentLang === 'en' 
+                    ? 'Notifications are not supported in this browser.' 
+                    : 'এই ব্রাউজারে বিজ্ঞপ্তি সমর্থিত নয়।');
+            }
+        }
+
+        function sendTestNotification() {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                const notification = new Notification('ALI Finance Manager', {
+                    body: currentLang === 'en' 
+                        ? 'Payment reminder: ৳ 15,000 due to Yusuf on Nov 25, 2025' 
+                        : 'পেমেন্ট রিমাইন্ডার: ইউসুফকে ২৫ নভেম্বর, ২০২৫ এ ৳ ১৫,০০০ দিতে হবে',
+                    icon: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=100&h=100&fit=crop'
+                });
+
+                // Vibrate if supported
+                if ('vibrate' in navigator && document.getElementById('vibrationToggle').checked) {
+                    navigator.vibrate([200, 100, 200]);
+                }
+            } else {
+                alert(currentLang === 'en' 
+                    ? 'Please enable notifications first.' 
+                    : 'প্রথমে বিজ্ঞপ্তি সক্ষম করুন।');
+            }
+        }
+
+        function saveSettings() {
+            const settings = {
+                dailyReminder: document.getElementById('dailyReminderToggle').checked,
+                reminderTime: document.getElementById('reminderTime').value,
+                reminderDays: document.querySelector('.frequency-option.active').dataset.days,
+                upcomingPayments: document.getElementById('upcomingPaymentsToggle').checked,
+                overdueAlerts: document.getElementById('overdueAlertsToggle').checked,
+                paymentConfirmations: document.getElementById('paymentConfirmationsToggle').checked,
+                loanCompletion: document.getElementById('loanCompletionToggle').checked,
+                sound: document.getElementById('soundToggle').checked,
+                vibration: document.getElementById('vibrationToggle').checked
+            };
+
+            localStorage.setItem('notificationSettings', JSON.stringify(settings));
+            
+            alert(currentLang === 'en' 
+                ? 'Settings saved successfully!' 
+                : 'সেটিংস সফলভাবে সংরক্ষিত হয়েছে!');
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('notificationSettings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                
+                document.getElementById('dailyReminderToggle').checked = settings.dailyReminder;
+                document.getElementById('reminderTime').value = settings.reminderTime;
+                document.getElementById('upcomingPaymentsToggle').checked = settings.upcomingPayments;
+                document.getElementById('overdueAlertsToggle').checked = settings.overdueAlerts;
+                document.getElementById('paymentConfirmationsToggle').checked = settings.paymentConfirmations;
+                document.getElementById('loanCompletionToggle').checked = settings.loanCompletion;
+                document.getElementById('soundToggle').checked = settings.sound;
+                document.getElementById('vibrationToggle').checked = settings.vibration;
+
+                // Set active frequency option
+                document.querySelectorAll('.frequency-option').forEach(option => {
+                    if (option.dataset.days === settings.reminderDays) {
+                        document.querySelectorAll('.frequency-option').forEach(o => o.classList.remove('active'));
+                        option.classList.add('active');
+                    }
+                });
+            }
+        }
+
+        function resetToDefaults() {
+            if (confirm(currentLang === 'en' 
+                ? 'Reset all settings to default?' 
+                : 'সব সেটিংস ডিফল্টে রিসেট করবেন?')) {
+                
+                localStorage.removeItem('notificationSettings');
+                
+                document.getElementById('dailyReminderToggle').checked = true;
+                document.getElementById('reminderTime').value = '10:00';
+                document.getElementById('upcomingPaymentsToggle').checked = true;
+                document.getElementById('overdueAlertsToggle').checked = true;
+                document.getElementById('paymentConfirmationsToggle').checked = true;
+                document.getElementById('loanCompletionToggle').checked = true;
+                document.getElementById('soundToggle').checked = true;
+                document.getElementById('vibrationToggle').checked = true;
+
+                document.querySelectorAll('.frequency-option').forEach(o => o.classList.remove('active'));
+                document.querySelector('.frequency-option[data-days="1"]').classList.add('active');
+
+                alert(currentLang === 'en' 
+                    ? 'Settings reset to defaults!' 
+                    : 'সেটিংস ডিফল্টে রিসেট করা হয়েছে!');
+            }
+        }
+
+        // Close sidebar on navigation (mobile)
+        document.querySelectorAll('#sidebar a').forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth < 1024) {
+                    document.getElementById('sidebar').classList.add('sidebar-mobile');
+                    document.getElementById('mobileOverlay').classList.remove('active');
+                }
+            });
+        });
+
+        // Schedule daily notification at 10 AM
+        function scheduleDailyNotification() {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                const settings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
+                if (settings.dailyReminder) {
+                    const now = new Date();
+                    const reminderTime = settings.reminderTime || '10:00';
+                    const [hours, minutes] = reminderTime.split(':');
+                    const scheduledTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+
+                    if (scheduledTime > now) {
+                        const timeout = scheduledTime.getTime() - now.getTime();
+                        setTimeout(() => {
+                            sendTestNotification();
+                            // Reschedule for next day
+                            scheduleDailyNotification();
+                        }, timeout);
+                    }
+                }
+            }
+        }
+
+        // Initialize daily notification scheduling
+        scheduleDailyNotification();
+    </script>
+<script id="dhws-dataInjector" src="../public/dhws-data-injector.js"></script>
+</body>
+</html>

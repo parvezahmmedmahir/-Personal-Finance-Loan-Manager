@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment History - ALI Finance Manager</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 260px;
+            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+            z-index: 50;
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar.mobile-hidden {
+            transform: translateX(-100%);
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+        
+        .main-content.full-width {
+            margin-left: 0;
+        }
+        
+        .filter-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .payment-table {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .table-header {
+            background: #f8fafc;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .table-row {
+            border-bottom: 1px solid #e5e7eb;
+            transition: background-color 0.15s ease;
+        }
+        
+        .table-row:hover {
+            background: #f8fafc;
+        }
+        
+        .payment-type-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .payment-type-regular {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .payment-type-extra {
+            background: #d1fae5;
+            color: #047857;
+        }
+        
+        .sort-icon {
+            cursor: pointer;
+            transition: color 0.15s ease;
+        }
+        
+        .sort-icon:hover {
+            color: #1e3a8a;
+        }
+        
+        .export-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: #10b981;
+            color: white;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+        
+        .export-btn:hover {
+            background: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .mobile-payment-card {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .mobile-payment-card.extra-payment {
+            border-left-color: #10b981;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        
+        .empty-state-icon {
+            font-size: 64px;
+            color: #e5e7eb;
+            margin-bottom: 16px;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.mobile-visible {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .desktop-table {
+                display: none;
+            }
+            
+            .mobile-cards {
+                display: block;
+            }
+        }
+        
+        @media (min-width: 769px) {
+            .mobile-cards {
+                display: none;
+            }
+            
+            .mobile-menu-btn {
+                display: none;
+            }
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+            display: none;
+        }
+        
+        .overlay.active {
+            display: block;
+        }
+    </style>
+  
+  <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Falifinanc7595back.builtwithrocket.new&_be=https%3A%2F%2Fapplication.rocket.new&_v=0.1.10"></script>
+  <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.1"></script>
+  </head>
+<body class="bg-background">
+    <!-- Mobile Overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="p-6 border-b border-white border-opacity-20">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                    <i class="fas fa-wallet text-primary text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-white font-bold text-lg">ALI Finance</h2>
+                    <p class="text-blue-200 text-xs">Manager</p>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="p-4">
+            <a href="financial_dashboard.html" class="flex items-center gap-3 px-4 py-3 text-white rounded-lg hover:bg-white hover:bg-opacity-10 transition-all mb-2">
+                <i class="fas fa-chart-line w-5"></i>
+                <span class="font-medium">Dashboard</span>
+            </a>
+            <a href="loan_management.html" class="flex items-center gap-3 px-4 py-3 text-white rounded-lg hover:bg-white hover:bg-opacity-10 transition-all mb-2">
+                <i class="fas fa-hand-holding-usd w-5"></i>
+                <span class="font-medium">My Loans</span>
+            </a>
+            <a href="payment_history.html" class="flex items-center gap-3 px-4 py-3 text-white rounded-lg bg-white bg-opacity-20 transition-all mb-2">
+                <i class="fas fa-history w-5"></i>
+                <span class="font-medium">Payment History</span>
+            </a>
+            <a href="add_new_loan.html" class="flex items-center gap-3 px-4 py-3 text-white rounded-lg hover:bg-white hover:bg-opacity-10 transition-all mb-2">
+                <i class="fas fa-plus-circle w-5"></i>
+                <span class="font-medium">Add New Loan</span>
+            </a>
+        </nav>
+        
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-white border-opacity-20">
+            <button class="flex items-center gap-3 px-4 py-3 text-white rounded-lg hover:bg-white hover:bg-opacity-10 transition-all w-full" onclick="logout()">
+                <i class="fas fa-sign-out-alt w-5"></i>
+                <span class="font-medium">Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Header -->
+        <header class="bg-white border-b border-border sticky top-0 z-30">
+            <div class="px-4 lg:px-8 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <button class="mobile-menu-btn text-text-primary hover:text-primary transition-colors" id="menuToggle">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <div>
+                            <h1 class="text-2xl font-bold text-primary" id="pageTitle">Payment History</h1>
+                            <p class="text-sm text-text-secondary" id="pageSubtitle">Track all your loan payments</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                        <!-- Language Toggle -->
+                        <div class="flex gap-2" id="languageToggle">
+                            <button class="lang-btn active px-3 py-2 rounded-lg text-sm font-medium border border-border transition-all" data-lang="en">
+                                EN
+                            </button>
+                            <button class="lang-btn px-3 py-2 rounded-lg text-sm font-medium border border-border transition-all" data-lang="bn">
+                                বাং
+                            </button>
+                        </div>
+                        
+                        <!-- User Profile -->
+                        <div class="flex items-center gap-2 px-3 py-2 bg-primary-50 rounded-lg">
+                            <i class="fas fa-user-circle text-primary text-xl"></i>
+                            <span class="text-sm font-medium text-primary hidden lg:inline">User</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="px-4 lg:px-8 py-6">
+            <!-- Filters Section -->
+            <div class="filter-card p-4 lg:p-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Search -->
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-text-tertiary"></i>
+                        <input 
+                            type="text" 
+                            id="searchInput"
+                            class="input pl-10" 
+                            placeholder="Search by loan or lender..."
+                        >
+                    </div>
+                    
+                    <!-- Loan Filter -->
+                    <div>
+                        <select id="loanFilter" class="input">
+                            <option value="">All Loans</option>
+                            <option value="home">Home Loan</option>
+                            <option value="car">Car Loan</option>
+                            <option value="personal">Personal Loan</option>
+                            <option value="business">Business Loan</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Payment Type Filter -->
+                    <div>
+                        <select id="paymentTypeFilter" class="input">
+                            <option value="">All Payment Types</option>
+                            <option value="regular">Regular Payment</option>
+                            <option value="extra">Extra Payment</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Date Range -->
+                    <div>
+                        <input 
+                            type="month" 
+                            id="dateFilter"
+                            class="input"
+                        >
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between mt-4 pt-4 border-t border-border">
+                    <button class="flex items-center gap-2 text-sm text-text-secondary hover:text-primary transition-colors" onclick="resetFilters()">
+                        <i class="fas fa-redo"></i>
+                        <span id="resetText">Reset Filters</span>
+                    </button>
+                    
+                    <button class="export-btn" onclick="exportData()">
+                        <i class="fas fa-download"></i>
+                        <span id="exportText">Export Data</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Desktop Table View -->
+            <div class="payment-table desktop-table">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="table-header">
+                                <th class="px-6 py-4 text-left">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm font-semibold text-text-primary" id="dateHeader">Date</span>
+                                        <i class="fas fa-sort sort-icon text-text-tertiary" onclick="sortTable('date')"></i>
+                                    </div>
+                                </th>
+                                <th class="px-6 py-4 text-left">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm font-semibold text-text-primary" id="loanHeader">Loan Name</span>
+                                        <i class="fas fa-sort sort-icon text-text-tertiary" onclick="sortTable('loan')"></i>
+                                    </div>
+                                </th>
+                                <th class="px-6 py-4 text-left">
+                                    <span class="text-sm font-semibold text-text-primary" id="lenderHeader">Lender</span>
+                                </th>
+                                <th class="px-6 py-4 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <span class="text-sm font-semibold text-text-primary" id="amountHeader">Amount</span>
+                                        <i class="fas fa-sort sort-icon text-text-tertiary" onclick="sortTable('amount')"></i>
+                                    </div>
+                                </th>
+                                <th class="px-6 py-4 text-center">
+                                    <span class="text-sm font-semibold text-text-primary" id="typeHeader">Type</span>
+                                </th>
+                                <th class="px-6 py-4 text-right">
+                                    <span class="text-sm font-semibold text-text-primary" id="balanceHeader">Remaining Balance</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentTableBody">
+                            <!-- Payment rows will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Empty State -->
+                <div id="emptyState" class="empty-state hidden">
+                    <i class="fas fa-receipt empty-state-icon"></i>
+                    <h3 class="text-xl font-semibold text-text-primary mb-2" id="emptyTitle">No Payments Found</h3>
+                    <p class="text-text-secondary" id="emptyMessage">Try adjusting your filters or add a new payment</p>
+                </div>
+            </div>
+
+            <!-- Mobile Card View -->
+            <div class="mobile-cards" id="mobileCards">
+                <!-- Payment cards will be inserted here -->
+            </div>
+
+            <!-- Pagination -->
+            <div class="flex items-center justify-between mt-6 px-4">
+                <div class="text-sm text-text-secondary">
+                    <span id="paginationInfo">Showing 1-10 of 45 payments</span>
+                </div>
+                <div class="flex gap-2">
+                    <button class="px-4 py-2 border border-border rounded-lg text-sm font-medium text-text-primary hover:bg-gray-50 transition-colors" onclick="previousPage()">
+                        <i class="fas fa-chevron-left mr-2"></i>
+                        <span id="prevText">Previous</span>
+                    </button>
+                    <button class="px-4 py-2 border border-border rounded-lg text-sm font-medium text-text-primary hover:bg-gray-50 transition-colors" onclick="nextPage()">
+                        <span id="nextText">Next</span>
+                        <i class="fas fa-chevron-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Language translations
+        const translations = {
+            en: {
+                pageTitle: 'Payment History',
+                pageSubtitle: 'Track all your loan payments',
+                dateHeader: 'Date',
+                loanHeader: 'Loan Name',
+                lenderHeader: 'Lender',
+                amountHeader: 'Amount',
+                typeHeader: 'Type',
+                balanceHeader: 'Remaining Balance',
+                resetText: 'Reset Filters',
+                exportText: 'Export Data',
+                emptyTitle: 'No Payments Found',
+                emptyMessage: 'Try adjusting your filters or add a new payment',
+                paginationInfo: 'Showing 1-10 of 45 payments',
+                prevText: 'Previous',
+                nextText: 'Next',
+                regularPayment: 'Regular',
+                extraPayment: 'Extra'
+            },
+            bn: {
+                pageTitle: 'পেমেন্ট ইতিহাস',
+                pageSubtitle: 'আপনার সকল ঋণ পেমেন্ট ট্র্যাক করুন',
+                dateHeader: 'তারিখ',
+                loanHeader: 'ঋণের নাম',
+                lenderHeader: 'ঋণদাতা',
+                amountHeader: 'পরিমাণ',
+                typeHeader: 'ধরন',
+                balanceHeader: 'অবশিষ্ট ব্যালেন্স',
+                resetText: 'ফিল্টার রিসেট করুন',
+                exportText: 'ডেটা এক্সপোর্ট করুন',
+                emptyTitle: 'কোন পেমেন্ট পাওয়া যায়নি',
+                emptyMessage: 'আপনার ফিল্টার সামঞ্জস্য করুন বা নতুন পেমেন্ট যোগ করুন',
+                paginationInfo: '৪৫টির মধ্যে ১-১০টি পেমেন্ট দেখানো হচ্ছে',
+                prevText: 'পূর্ববর্তী',
+                nextText: 'পরবর্তী',
+                regularPayment: 'নিয়মিত',
+                extraPayment: 'অতিরিক্ত'
+            }
+        };
+
+        let currentLang = localStorage.getItem('language') || 'en';
+
+        // Mock payment data
+        const mockPayments = [
+            {
+                date: '2025-11-15',
+                loanName: 'Home Loan',
+                lender: 'Dhaka Bank',
+                amount: 25000,
+                type: 'regular',
+                balance: 475000
+            },
+            {
+                date: '2025-11-10',
+                loanName: 'Car Loan',
+                lender: 'BRAC Bank',
+                amount: 15000,
+                type: 'regular',
+                balance: 285000
+            },
+            {
+                date: '2025-11-05',
+                loanName: 'Personal Loan',
+                lender: 'City Bank',
+                amount: 8000,
+                type: 'extra',
+                balance: 92000
+            },
+            {
+                date: '2025-10-20',
+                loanName: 'Business Loan',
+                lender: 'Standard Chartered',
+                amount: 50000,
+                type: 'regular',
+                balance: 950000
+            },
+            {
+                date: '2025-10-15',
+                loanName: 'Home Loan',
+                lender: 'Dhaka Bank',
+                amount: 25000,
+                type: 'regular',
+                balance: 500000
+            },
+            {
+                date: '2025-10-10',
+                loanName: 'Car Loan',
+                lender: 'BRAC Bank',
+                amount: 15000,
+                type: 'regular',
+                balance: 300000
+            },
+            {
+                date: '2025-10-05',
+                loanName: 'Personal Loan',
+                lender: 'City Bank',
+                amount: 10000,
+                type: 'regular',
+                balance: 100000
+            },
+            {
+                date: '2025-09-25',
+                loanName: 'Business Loan',
+                lender: 'Standard Chartered',
+                amount: 50000,
+                type: 'regular',
+                balance: 1000000
+            },
+            {
+                date: '2025-09-20',
+                loanName: 'Home Loan',
+                lender: 'Dhaka Bank',
+                amount: 30000,
+                type: 'extra',
+                balance: 525000
+            },
+            {
+                date: '2025-09-15',
+                loanName: 'Car Loan',
+                lender: 'BRAC Bank',
+                amount: 15000,
+                type: 'regular',
+                balance: 315000
+            }
+        ];
+
+        let filteredPayments = [...mockPayments];
+        let currentPage = 1;
+        const itemsPerPage = 10;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            renderPayments();
+            setupEventListeners();
+            updateLanguage();
+        });
+
+        // Language toggle
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active', 'bg-primary', 'text-white'));
+                this.classList.add('active', 'bg-primary', 'text-white');
+                currentLang = this.dataset.lang;
+                localStorage.setItem('language', currentLang);
+                updateLanguage();
+                renderPayments();
+            });
+        });
+
+        function updateLanguage() {
+            const trans = translations[currentLang];
+            document.getElementById('pageTitle').textContent = trans.pageTitle;
+            document.getElementById('pageSubtitle').textContent = trans.pageSubtitle;
+            document.getElementById('dateHeader').textContent = trans.dateHeader;
+            document.getElementById('loanHeader').textContent = trans.loanHeader;
+            document.getElementById('lenderHeader').textContent = trans.lenderHeader;
+            document.getElementById('amountHeader').textContent = trans.amountHeader;
+            document.getElementById('typeHeader').textContent = trans.typeHeader;
+            document.getElementById('balanceHeader').textContent = trans.balanceHeader;
+            document.getElementById('resetText').textContent = trans.resetText;
+            document.getElementById('exportText').textContent = trans.exportText;
+            document.getElementById('emptyTitle').textContent = trans.emptyTitle;
+            document.getElementById('emptyMessage').textContent = trans.emptyMessage;
+            document.getElementById('paginationInfo').textContent = trans.paginationInfo;
+            document.getElementById('prevText').textContent = trans.prevText;
+            document.getElementById('nextText').textContent = trans.nextText;
+        }
+
+        function formatCurrency(amount) {
+            if (currentLang === 'bn') {
+                const bengaliNumerals = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+                const formatted = amount.toLocaleString('en-IN');
+                return '৳ ' + formatted.split('').map(char => 
+                    /\d/.test(char) ? bengaliNumerals[parseInt(char)] : char
+                ).join('');
+            }
+            return '৳ ' + amount.toLocaleString('en-IN');
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            
+            if (currentLang === 'bn') {
+                const bengaliNumerals = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+                const formatted = `${day}/${month}/${year}`;
+                return formatted.split('').map(char => 
+                    /\d/.test(char) ? bengaliNumerals[parseInt(char)] : char
+                ).join('');
+            }
+            return `${day}/${month}/${year}`;
+        }
+
+        function renderPayments() {
+            const tableBody = document.getElementById('paymentTableBody');
+            const mobileCards = document.getElementById('mobileCards');
+            const emptyState = document.getElementById('emptyState');
+            
+            tableBody.innerHTML = '';
+            mobileCards.innerHTML = '';
+            
+            if (filteredPayments.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pagePayments = filteredPayments.slice(start, end);
+            
+            // Desktop table rows
+            pagePayments.forEach(payment => {
+                const row = document.createElement('tr');
+                row.className = 'table-row';
+                
+                const typeText = payment.type === 'regular' ? 
+                    translations[currentLang].regularPayment : 
+                    translations[currentLang].extraPayment;
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4">
+                        <span class="text-sm text-text-primary font-medium">${formatDate(payment.date)}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-sm text-text-primary font-medium">${payment.loanName}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-sm text-text-secondary">${payment.lender}</span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <span class="text-sm text-text-primary font-semibold">${formatCurrency(payment.amount)}</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="payment-type-badge payment-type-${payment.type}">${typeText}</span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <span class="text-sm text-text-secondary">${formatCurrency(payment.balance)}</span>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            // Mobile cards
+            pagePayments.forEach(payment => {
+                const card = document.createElement('div');
+                card.className = `mobile-payment-card ${payment.type === 'extra' ? 'extra-payment' : ''}`;
+                
+                const typeText = payment.type === 'regular' ? 
+                    translations[currentLang].regularPayment : 
+                    translations[currentLang].extraPayment;
+                
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <h3 class="font-semibold text-text-primary mb-1">${payment.loanName}</h3>
+                            <p class="text-sm text-text-secondary">${payment.lender}</p>
+                        </div>
+                        <span class="payment-type-badge payment-type-${payment.type}">${typeText}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <p class="text-xs text-text-tertiary mb-1">${translations[currentLang].dateHeader}</p>
+                            <p class="text-sm font-medium text-text-primary">${formatDate(payment.date)}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-text-tertiary mb-1">${translations[currentLang].amountHeader}</p>
+                            <p class="text-sm font-semibold text-primary">${formatCurrency(payment.amount)}</p>
+                        </div>
+                        <div class="col-span-2">
+                            <p class="text-xs text-text-tertiary mb-1">${translations[currentLang].balanceHeader}</p>
+                            <p class="text-sm font-medium text-text-secondary">${formatCurrency(payment.balance)}</p>
+                        </div>
+                    </div>
+                `;
+                
+                mobileCards.appendChild(card);
+            });
+        }
+
+        function setupEventListeners() {
+            // Search
+            document.getElementById('searchInput').addEventListener('input', applyFilters);
+            
+            // Filters
+            document.getElementById('loanFilter').addEventListener('change', applyFilters);
+            document.getElementById('paymentTypeFilter').addEventListener('change', applyFilters);
+            document.getElementById('dateFilter').addEventListener('change', applyFilters);
+            
+            // Mobile menu
+            document.getElementById('menuToggle').addEventListener('click', toggleSidebar);
+            document.getElementById('overlay').addEventListener('click', toggleSidebar);
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const loanFilter = document.getElementById('loanFilter').value.toLowerCase();
+            const typeFilter = document.getElementById('paymentTypeFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+            
+            filteredPayments = mockPayments.filter(payment => {
+                const matchesSearch = payment.loanName.toLowerCase().includes(searchTerm) || 
+                                    payment.lender.toLowerCase().includes(searchTerm);
+                const matchesLoan = !loanFilter || payment.loanName.toLowerCase().includes(loanFilter);
+                const matchesType = !typeFilter || payment.type === typeFilter;
+                const matchesDate = !dateFilter || payment.date.startsWith(dateFilter);
+                
+                return matchesSearch && matchesLoan && matchesType && matchesDate;
+            });
+            
+            currentPage = 1;
+            renderPayments();
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('loanFilter').value = '';
+            document.getElementById('paymentTypeFilter').value = '';
+            document.getElementById('dateFilter').value = '';
+            filteredPayments = [...mockPayments];
+            currentPage = 1;
+            renderPayments();
+        }
+
+        function sortTable(column) {
+            const isAscending = filteredPayments[0] && filteredPayments[0][column] <= filteredPayments[filteredPayments.length - 1][column];
+            
+            filteredPayments.sort((a, b) => {
+                if (column === 'date') {
+                    return isAscending ? 
+                        new Date(b.date) - new Date(a.date) : 
+                        new Date(a.date) - new Date(b.date);
+                } else if (column === 'amount') {
+                    return isAscending ? b.amount - a.amount : a.amount - b.amount;
+                } else {
+                    return isAscending ? 
+                        b[column].localeCompare(a[column]) : 
+                        a[column].localeCompare(b[column]);
+                }
+            });
+            
+            renderPayments();
+        }
+
+        function exportData() {
+            // Create CSV content
+            let csv = 'Date,Loan Name,Lender,Amount,Type,Remaining Balance\n';
+            
+            filteredPayments.forEach(payment => {
+                csv += `${payment.date},${payment.loanName},${payment.lender},${payment.amount},${payment.type},${payment.balance}\n`;
+            });
+            
+            // Create download link
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `payment_history_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderPayments();
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderPayments();
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            
+            sidebar.classList.toggle('mobile-visible');
+            overlay.classList.toggle('active');
+        }
+
+        function logout() {
+            localStorage.removeItem('isAuthenticated');
+            localStorage.removeItem('authMethod');
+            window.location.href = 'login_authentication.html';
+        }
+
+        // Check authentication
+        if (localStorage.getItem('isAuthenticated') !== 'true') {
+            window.location.href = 'login_authentication.html';
+        }
+
+        // Load saved language
+        const savedLang = localStorage.getItem('language') || 'en';
+        if (savedLang !== 'en') {
+            document.querySelector(`[data-lang="${savedLang}"]`).click();
+        }
+    </script>
+<script id="dhws-dataInjector" src="../public/dhws-data-injector.js"></script>
+</body>
+</html>

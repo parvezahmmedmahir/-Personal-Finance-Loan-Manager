@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Loan - ALI Finance Manager</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px;
+            background: #1e3a8a;
+            color: white;
+            transition: transform 0.3s ease;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .main-content {
+            margin-left: 280px;
+            transition: margin-left 0.3s ease;
+            min-height: 100vh;
+            background: #f8fafc;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        .contact-picker-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 200;
+            backdrop-filter: blur(4px);
+        }
+
+        .contact-picker-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .contact-card {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .contact-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .contact-card.selected {
+            border-color: #1e3a8a;
+            background: #eff6ff;
+        }
+
+        .calculated-payment {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-left: 4px solid #1e3a8a;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        .form-section {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            pointer-events: none;
+        }
+
+        .input-with-icon {
+            padding-left: 40px;
+        }
+
+        .currency-symbol {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #1e3a8a;
+            font-weight: 600;
+            pointer-events: none;
+        }
+
+        .percentage-symbol {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            pointer-events: none;
+        }
+    </style>
+  
+  <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Falifinanc7595back.builtwithrocket.new&_be=https%3A%2F%2Fapplication.rocket.new&_v=0.1.10"></script>
+  <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.1"></script>
+  </head>
+<body>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="p-6">
+            <!-- Logo -->
+            <div class="flex items-center gap-3 mb-8">
+                <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                    <i class="fas fa-wallet text-primary text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold">ALI Finance</h2>
+                    <p class="text-xs text-blue-200" id="sidebarSubtitle">Manager</p>
+                </div>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="space-y-2">
+                <a href="financial_dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-800 transition-colors">
+                    <i class="fas fa-chart-line w-5"></i>
+                    <span id="navDashboard">Dashboard</span>
+                </a>
+                <a href="loan_management.html" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-800 transition-colors">
+                    <i class="fas fa-file-invoice-dollar w-5"></i>
+                    <span id="navLoans">My Loans</span>
+                </a>
+                <a href="add_new_loan.html" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-800 transition-colors">
+                    <i class="fas fa-plus-circle w-5"></i>
+                    <span id="navAddLoan">Add New Loan</span>
+                </a>
+                <a href="payment_history.html" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-800 transition-colors">
+                    <i class="fas fa-history w-5"></i>
+                    <span id="navPayments">Payment History</span>
+                </a>
+            </nav>
+
+            <!-- User Profile -->
+            <div class="mt-8 pt-6 border-t border-blue-700">
+                <div class="flex items-center gap-3 px-4">
+                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1a5df2297-1763292384104.png" 
+                         alt="User profile picture"
+                         class="w-10 h-10 rounded-full object-cover"
+                         onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'; this.onerror=null;">
+                    <div class="flex-1">
+                        <p class="font-medium text-sm" id="userName">User Name</p>
+                        <p class="text-xs text-blue-200" id="userEmail">user@example.com</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logout Button -->
+            <div class="mt-4 px-4">
+                <button onclick="handleLogout()" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-700 hover:bg-blue-600 rounded-lg transition-colors">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span id="logoutBtn">Logout</span>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Header -->
+        <header class="bg-white border-b border-border sticky top-0 z-50">
+            <div class="flex items-center justify-between px-4 lg:px-8 py-4">
+                <div class="flex items-center gap-4">
+                    <button id="menuToggle" class="lg:hidden text-text-primary hover:text-primary transition-colors">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <div>
+                        <h1 class="text-2xl font-bold text-primary" id="pageTitle">Add New Loan</h1>
+                        <p class="text-sm text-text-secondary" id="pageSubtitle">Create a new loan record with payment details</p>
+                    </div>
+                </div>
+
+                <!-- Language Toggle -->
+                <div class="flex items-center gap-2">
+                    <button class="lang-toggle active px-3 py-2 rounded-lg text-sm font-medium border border-border hover:bg-gray-50 transition-colors" data-lang="en">
+                        EN
+                    </button>
+                    <button class="lang-toggle px-3 py-2 rounded-lg text-sm font-medium border border-border hover:bg-gray-50 transition-colors" data-lang="bn">
+                        বাং
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Form Content -->
+        <div class="px-4 lg:px-8 py-6 max-w-4xl mx-auto">
+            <!-- Progress Indicator -->
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-text-secondary" id="formProgress">Form Progress</span>
+                    <span class="text-sm font-medium text-primary" id="progressPercent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Loan Details Form -->
+            <form id="loanForm" class="space-y-6">
+                <!-- Basic Information Section -->
+                <div class="form-section">
+                    <h3 class="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+                        <i class="fas fa-info-circle"></i>
+                        <span id="sectionBasic">Basic Information</span>
+                    </h3>
+
+                    <div class="space-y-4">
+                        <!-- Loan Name -->
+                        <div>
+                            <label for="loanName" class="block text-sm font-medium text-text-primary mb-2" id="labelLoanName">
+                                Loan Name <span class="text-error">*</span>
+                            </label>
+                            <div class="input-group">
+                                <i class="fas fa-file-signature input-icon"></i>
+                                <input 
+                                    type="text" 
+                                    id="loanName" 
+                                    name="loanName"
+                                    class="input input-with-icon"
+                                    placeholder="e.g., Home Renovation Loan"
+                                    required
+                                >
+                            </div>
+                            <p class="mt-1 text-xs text-text-tertiary" id="hintLoanName">Enter a descriptive name for this loan</p>
+                        </div>
+
+                        <!-- Lender Selection -->
+                        <div>
+                            <label for="lenderName" class="block text-sm font-medium text-text-primary mb-2" id="labelLender">
+                                Lender <span class="text-error">*</span>
+                            </label>
+                            <div class="flex gap-2">
+                                <div class="input-group flex-1">
+                                    <i class="fas fa-user input-icon"></i>
+                                    <input 
+                                        type="text" 
+                                        id="lenderName" 
+                                        name="lenderName"
+                                        class="input input-with-icon"
+                                        placeholder="Select or enter lender name"
+                                        required
+                                        readonly
+                                    >
+                                </div>
+                                <button 
+                                    type="button" 
+                                    id="selectContactBtn"
+                                    class="btn-primary flex items-center gap-2 whitespace-nowrap"
+                                >
+                                    <i class="fas fa-address-book"></i>
+                                    <span id="btnSelectContact">Select Contact</span>
+                                </button>
+                            </div>
+                            <div id="selectedContactInfo" class="hidden mt-2 p-3 bg-primary-50 rounded-lg border border-primary-200">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-user-circle text-2xl text-primary"></i>
+                                    <div>
+                                        <p class="font-medium text-text-primary" id="contactName"></p>
+                                        <p class="text-sm text-text-secondary" id="contactPhone"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loan Amount Section -->
+                <div class="form-section">
+                    <h3 class="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span id="sectionAmount">Loan Amount</span>
+                    </h3>
+
+                    <div>
+                        <label for="principalAmount" class="block text-sm font-medium text-text-primary mb-2" id="labelPrincipal">
+                            Principal Amount <span class="text-error">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="currency-symbol">৳</span>
+                            <input 
+                                type="number" 
+                                id="principalAmount" 
+                                name="principalAmount"
+                                class="input"
+                                style="padding-left: 32px;"
+                                placeholder="0.00"
+                                min="1"
+                                step="0.01"
+                                required
+                            >
+                        </div>
+                        <p class="mt-1 text-xs text-text-tertiary" id="hintPrincipal">Enter the total loan amount in BDT</p>
+                    </div>
+                </div>
+
+                <!-- Loan Terms Section -->
+                <div class="form-section">
+                    <h3 class="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span id="sectionTerms">Loan Terms</span>
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Interest Rate -->
+                        <div>
+                            <label for="interestRate" class="block text-sm font-medium text-text-primary mb-2" id="labelInterest">
+                                Interest Rate (Annual) <span class="text-error">*</span>
+                            </label>
+                            <div class="input-group">
+                                <i class="fas fa-percent input-icon"></i>
+                                <input 
+                                    type="number" 
+                                    id="interestRate" 
+                                    name="interestRate"
+                                    class="input input-with-icon"
+                                    style="padding-right: 32px;"
+                                    placeholder="0.00"
+                                    min="0"
+                                    max="100"
+                                    step="0.01"
+                                    required
+                                >
+                                <span class="percentage-symbol">%</span>
+                            </div>
+                        </div>
+
+                        <!-- Loan Term -->
+                        <div>
+                            <label for="loanTerm" class="block text-sm font-medium text-text-primary mb-2" id="labelTerm">
+                                Loan Term <span class="text-error">*</span>
+                            </label>
+                            <div class="input-group">
+                                <i class="fas fa-clock input-icon"></i>
+                                <input 
+                                    type="number" 
+                                    id="loanTerm" 
+                                    name="loanTerm"
+                                    class="input input-with-icon"
+                                    placeholder="12"
+                                    min="1"
+                                    required
+                                >
+                            </div>
+                            <p class="mt-1 text-xs text-text-tertiary" id="hintTerm">Duration in months</p>
+                        </div>
+
+                        <!-- Start Date -->
+                        <div>
+                            <label for="startDate" class="block text-sm font-medium text-text-primary mb-2" id="labelStartDate">
+                                Start Date <span class="text-error">*</span>
+                            </label>
+                            <div class="input-group">
+                                <i class="fas fa-calendar input-icon"></i>
+                                <input 
+                                    type="date" 
+                                    id="startDate" 
+                                    name="startDate"
+                                    class="input input-with-icon"
+                                    required
+                                >
+                            </div>
+                        </div>
+
+                        <!-- End Date (Auto-calculated) -->
+                        <div>
+                            <label for="endDate" class="block text-sm font-medium text-text-primary mb-2" id="labelEndDate">
+                                End Date
+                            </label>
+                            <div class="input-group">
+                                <i class="fas fa-calendar-check input-icon"></i>
+                                <input 
+                                    type="text" 
+                                    id="endDate" 
+                                    name="endDate"
+                                    class="input input-with-icon bg-gray-50"
+                                    placeholder="Auto-calculated"
+                                    readonly
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calculated Payment Section -->
+                <div class="calculated-payment p-6 rounded-lg">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+                                <i class="fas fa-calculator text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-text-secondary" id="labelMonthlyPayment">Monthly Payment</p>
+                                <p class="text-3xl font-bold text-primary" id="monthlyPaymentAmount">৳ 0.00</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-text-secondary" id="labelTotalPayable">Total Payable</p>
+                            <p class="text-xl font-semibold text-text-primary" id="totalPayableAmount">৳ 0.00</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 pt-4 border-t border-primary-200">
+                        <div>
+                            <p class="text-xs text-text-tertiary" id="labelTotalInterest">Total Interest</p>
+                            <p class="text-lg font-medium text-text-primary" id="totalInterestAmount">৳ 0.00</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-text-tertiary" id="labelPaymentCount">Number of Payments</p>
+                            <p class="text-lg font-medium text-text-primary" id="paymentCount">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex flex-col sm:flex-row gap-3 pt-4">
+                    <button type="submit" class="btn-primary flex-1 flex items-center justify-center gap-2">
+                        <i class="fas fa-save"></i>
+                        <span id="btnSave">Save Loan</span>
+                    </button>
+                    <button type="button" onclick="handleCancel()" class="btn-outline flex-1 flex items-center justify-center gap-2">
+                        <i class="fas fa-times"></i>
+                        <span id="btnCancel">Cancel</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Contact Picker Modal -->
+    <div class="contact-picker-modal" id="contactModal">
+        <div class="bg-white rounded-xl shadow-custom-lg w-full max-w-2xl mx-4 max-h-[80vh] overflow-hidden flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-6 border-b border-border">
+                <div>
+                    <h3 class="text-xl font-bold text-primary" id="modalTitle">Select Lender</h3>
+                    <p class="text-sm text-text-secondary" id="modalSubtitle">Choose from your contacts</p>
+                </div>
+                <button onclick="closeContactModal()" class="text-text-secondary hover:text-text-primary transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="p-4 border-b border-border">
+                <div class="input-group">
+                    <i class="fas fa-search input-icon"></i>
+                    <input 
+                        type="text" 
+                        id="contactSearch"
+                        class="input input-with-icon"
+                        placeholder="Search contacts..."
+                    >
+                </div>
+            </div>
+
+            <!-- Contact List -->
+            <div class="flex-1 overflow-y-auto p-4 scrollbar-thin" id="contactList">
+                <!-- Contacts will be dynamically loaded here -->
+            </div>
+
+            <!-- Modal Actions -->
+            <div class="p-4 border-t border-border flex gap-3">
+                <button onclick="confirmContactSelection()" class="btn-primary flex-1" id="btnConfirmContact">
+                    <i class="fas fa-check mr-2"></i>
+                    <span>Confirm Selection</span>
+                </button>
+                <button onclick="closeContactModal()" class="btn-ghost flex-1" id="btnCancelContact">
+                    <span>Cancel</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Language translations
+        const translations = {
+            en: {
+                sidebarSubtitle: 'Manager',
+                navDashboard: 'Dashboard',
+                navLoans: 'My Loans',
+                navAddLoan: 'Add New Loan',
+                navPayments: 'Payment History',
+                logoutBtn: 'Logout',
+                pageTitle: 'Add New Loan',
+                pageSubtitle: 'Create a new loan record with payment details',
+                formProgress: 'Form Progress',
+                sectionBasic: 'Basic Information',
+                sectionAmount: 'Loan Amount',
+                sectionTerms: 'Loan Terms',
+                labelLoanName: 'Loan Name',
+                labelLender: 'Lender',
+                labelPrincipal: 'Principal Amount',
+                labelInterest: 'Interest Rate (Annual)',
+                labelTerm: 'Loan Term',
+                labelStartDate: 'Start Date',
+                labelEndDate: 'End Date',
+                labelMonthlyPayment: 'Monthly Payment',
+                labelTotalPayable: 'Total Payable',
+                labelTotalInterest: 'Total Interest',
+                labelPaymentCount: 'Number of Payments',
+                hintLoanName: 'Enter a descriptive name for this loan',
+                hintPrincipal: 'Enter the total loan amount in BDT',
+                hintTerm: 'Duration in months',
+                btnSelectContact: 'Select Contact',
+                btnSave: 'Save Loan',
+                btnCancel: 'Cancel',
+                modalTitle: 'Select Lender',
+                modalSubtitle: 'Choose from your contacts',
+                btnConfirmContact: 'Confirm Selection',
+                btnCancelContact: 'Cancel',
+                successMessage: 'Loan created successfully!',
+                errorMessage: 'Please fill in all required fields',
+                cancelConfirm: 'Are you sure you want to cancel? All entered data will be lost.',
+                selectContactFirst: 'Please select a contact first'
+            },
+            bn: {
+                sidebarSubtitle: 'ম্যানেজার',
+                navDashboard: 'ড্যাশবোর্ড',
+                navLoans: 'আমার ঋণ',
+                navAddLoan: 'নতুন ঋণ যোগ করুন',
+                navPayments: 'পেমেন্ট ইতিহাস',
+                logoutBtn: 'লগআউট',
+                pageTitle: 'নতুন ঋণ যোগ করুন',
+                pageSubtitle: 'পেমেন্ট বিবরণ সহ একটি নতুন ঋণ রেকর্ড তৈরি করুন',
+                formProgress: 'ফর্ম অগ্রগতি',
+                sectionBasic: 'মৌলিক তথ্য',
+                sectionAmount: 'ঋণের পরিমাণ',
+                sectionTerms: 'ঋণের শর্তাবলী',
+                labelLoanName: 'ঋণের নাম',
+                labelLender: 'ঋণদাতা',
+                labelPrincipal: 'মূল পরিমাণ',
+                labelInterest: 'সুদের হার (বার্ষিক)',
+                labelTerm: 'ঋণের মেয়াদ',
+                labelStartDate: 'শুরুর তারিখ',
+                labelEndDate: 'শেষ তারিখ',
+                labelMonthlyPayment: 'মাসিক পেমেন্ট',
+                labelTotalPayable: 'মোট পরিশোধযোগ্য',
+                labelTotalInterest: 'মোট সুদ',
+                labelPaymentCount: 'পেমেন্টের সংখ্যা',
+                hintLoanName: 'এই ঋণের জন্য একটি বর্ণনামূলক নাম লিখুন',
+                hintPrincipal: 'BDT তে মোট ঋণের পরিমাণ লিখুন',
+                hintTerm: 'মাসে সময়কাল',
+                btnSelectContact: 'যোগাযোগ নির্বাচন করুন',
+                btnSave: 'ঋণ সংরক্ষণ করুন',
+                btnCancel: 'বাতিল',
+                modalTitle: 'ঋণদাতা নির্বাচন করুন',
+                modalSubtitle: 'আপনার পরিচিতি থেকে চয়ন করুন',
+                btnConfirmContact: 'নির্বাচন নিশ্চিত করুন',
+                btnCancelContact: 'বাতিল',
+                successMessage: 'ঋণ সফলভাবে তৈরি হয়েছে!',
+                errorMessage: 'অনুগ্রহ করে সমস্ত প্রয়োজনীয় ক্ষেত্র পূরণ করুন',
+                cancelConfirm: 'আপনি কি নিশ্চিত যে আপনি বাতিল করতে চান? সমস্ত প্রবেশ করা ডেটা হারিয়ে যাবে।',
+                selectContactFirst: 'অনুগ্রহ করে প্রথমে একটি যোগাযোগ নির্বাচন করুন'
+            }
+        };
+
+        let currentLang = localStorage.getItem('language') || 'en';
+        let selectedContact = null;
+
+        // Mock contacts data
+        const mockContacts = [
+            { id: 1, name: 'Ahmed Rahman', phone: '+880 1712-345678', email: 'ahmed.rahman@example.com' },
+            { id: 2, name: 'Fatima Khan', phone: '+880 1823-456789', email: 'fatima.khan@example.com' },
+            { id: 3, name: 'Mohammad Ali', phone: '+880 1934-567890', email: 'mohammad.ali@example.com' },
+            { id: 4, name: 'Ayesha Begum', phone: '+880 1645-678901', email: 'ayesha.begum@example.com' },
+            { id: 5, name: 'Karim Hossain', phone: '+880 1756-789012', email: 'karim.hossain@example.com' },
+            { id: 6, name: 'Nadia Islam', phone: '+880 1867-890123', email: 'nadia.islam@example.com' },
+            { id: 7, name: 'Rashid Ahmed', phone: '+880 1978-901234', email: 'rashid.ahmed@example.com' },
+            { id: 8, name: 'Sultana Parveen', phone: '+880 1589-012345', email: 'sultana.parveen@example.com' }
+        ];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthentication();
+            loadUserData();
+            updateLanguage();
+            setupEventListeners();
+            setDefaultDate();
+            loadContacts();
+        });
+
+        function checkAuthentication() {
+            if (localStorage.getItem('isAuthenticated') !== 'true') {
+                window.location.href = 'login_authentication.html';
+            }
+        }
+
+        function loadUserData() {
+            const googleUser = localStorage.getItem('googleUser');
+            if (googleUser) {
+                const user = JSON.parse(googleUser);
+                document.getElementById('userName').textContent = user.name;
+                document.getElementById('userEmail').textContent = user.email;
+            }
+        }
+
+        function setupEventListeners() {
+            // Menu toggle
+            document.getElementById('menuToggle').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('active');
+            });
+
+            // Language toggle
+            document.querySelectorAll('.lang-toggle').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.lang-toggle').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentLang = this.dataset.lang;
+                    localStorage.setItem('language', currentLang);
+                    updateLanguage();
+                });
+            });
+
+            // Set active language button
+            document.querySelector(`[data-lang="${currentLang}"]`).classList.add('active');
+
+            // Form inputs for calculation
+            ['principalAmount', 'interestRate', 'loanTerm', 'startDate'].forEach(id => {
+                document.getElementById(id).addEventListener('input', calculateLoanDetails);
+            });
+
+            // Contact selection
+            document.getElementById('selectContactBtn').addEventListener('click', openContactModal);
+
+            // Contact search
+            document.getElementById('contactSearch').addEventListener('input', filterContacts);
+
+            // Form submission
+            document.getElementById('loanForm').addEventListener('submit', handleFormSubmit);
+
+            // Form progress tracking
+            document.getElementById('loanForm').addEventListener('input', updateFormProgress);
+        }
+
+        function setDefaultDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').value = today;
+            calculateLoanDetails();
+        }
+
+        function updateLanguage() {
+            const trans = translations[currentLang];
+            Object.keys(trans).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    if (element.tagName === 'INPUT' && element.placeholder) {
+                        // Update placeholder for inputs
+                        if (key === 'contactSearch') {
+                            element.placeholder = currentLang === 'en' ? 'Search contacts...' : 'পরিচিতি খুঁজুন...';
+                        }
+                    } else {
+                        element.textContent = trans[key];
+                    }
+                }
+            });
+
+            // Update input placeholders
+            if (currentLang === 'bn') {
+                document.getElementById('loanName').placeholder = 'যেমন, বাড়ি সংস্কার ঋণ';
+                document.getElementById('lenderName').placeholder = 'ঋণদাতার নাম নির্বাচন বা লিখুন';
+                document.getElementById('principalAmount').placeholder = '০.০০';
+                document.getElementById('interestRate').placeholder = '০.০০';
+                document.getElementById('loanTerm').placeholder = '১২';
+                document.getElementById('endDate').placeholder = 'স্বয়ংক্রিয়ভাবে গণনা করা';
+            } else {
+                document.getElementById('loanName').placeholder = 'e.g., Home Renovation Loan';
+                document.getElementById('lenderName').placeholder = 'Select or enter lender name';
+                document.getElementById('principalAmount').placeholder = '0.00';
+                document.getElementById('interestRate').placeholder = '0.00';
+                document.getElementById('loanTerm').placeholder = '12';
+                document.getElementById('endDate').placeholder = 'Auto-calculated';
+            }
+        }
+
+        function calculateLoanDetails() {
+            const principal = parseFloat(document.getElementById('principalAmount').value) || 0;
+            const annualRate = parseFloat(document.getElementById('interestRate').value) || 0;
+            const months = parseInt(document.getElementById('loanTerm').value) || 0;
+            const startDate = document.getElementById('startDate').value;
+
+            if (principal > 0 && months > 0) {
+                // Calculate monthly interest rate
+                const monthlyRate = annualRate / 100 / 12;
+                
+                // Calculate monthly payment using amortization formula
+                let monthlyPayment = 0;
+                if (annualRate > 0) {
+                    monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, months)) / 
+                                   (Math.pow(1 + monthlyRate, months) - 1);
+                } else {
+                    monthlyPayment = principal / months;
+                }
+
+                // Calculate total payable and interest
+                const totalPayable = monthlyPayment * months;
+                const totalInterest = totalPayable - principal;
+
+                // Update display
+                document.getElementById('monthlyPaymentAmount').textContent = formatCurrency(monthlyPayment);
+                document.getElementById('totalPayableAmount').textContent = formatCurrency(totalPayable);
+                document.getElementById('totalInterestAmount').textContent = formatCurrency(totalInterest);
+                document.getElementById('paymentCount').textContent = months;
+
+                // Calculate end date
+                if (startDate) {
+                    const start = new Date(startDate);
+                    const end = new Date(start);
+                    end.setMonth(end.getMonth() + months);
+                    document.getElementById('endDate').value = formatDate(end);
+                }
+            } else {
+                // Reset calculations
+                document.getElementById('monthlyPaymentAmount').textContent = '৳ 0.00';
+                document.getElementById('totalPayableAmount').textContent = '৳ 0.00';
+                document.getElementById('totalInterestAmount').textContent = '৳ 0.00';
+                document.getElementById('paymentCount').textContent = '0';
+                document.getElementById('endDate').value = '';
+            }
+        }
+
+        function formatCurrency(amount) {
+            return '৳ ' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        function formatDate(date) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        function updateFormProgress() {
+            const form = document.getElementById('loanForm');
+            const inputs = form.querySelectorAll('input[required]');
+            let filled = 0;
+
+            inputs.forEach(input => {
+                if (input.value.trim() !== '') {
+                    filled++;
+                }
+            });
+
+            const progress = (filled / inputs.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('progressPercent').textContent = Math.round(progress) + '%';
+        }
+
+        function openContactModal() {
+            document.getElementById('contactModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeContactModal() {
+            document.getElementById('contactModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function loadContacts() {
+            const contactList = document.getElementById('contactList');
+            contactList.innerHTML = mockContacts.map(contact => `
+                <div class="contact-card p-4 border border-border rounded-lg mb-3 hover:border-primary transition-colors" 
+                     data-contact-id="${contact.id}"
+                     onclick="selectContact(${contact.id})">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-primary text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-medium text-text-primary">${contact.name}</p>
+                            <p class="text-sm text-text-secondary">${contact.phone}</p>
+                            <p class="text-xs text-text-tertiary">${contact.email}</p>
+                        </div>
+                        <i class="fas fa-check-circle text-2xl text-primary opacity-0 contact-check"></i>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterContacts() {
+            const searchTerm = document.getElementById('contactSearch').value.toLowerCase();
+            const filteredContacts = mockContacts.filter(contact => 
+                contact.name.toLowerCase().includes(searchTerm) ||
+                contact.phone.includes(searchTerm) ||
+                contact.email.toLowerCase().includes(searchTerm)
+            );
+
+            const contactList = document.getElementById('contactList');
+            contactList.innerHTML = filteredContacts.map(contact => `
+                <div class="contact-card p-4 border border-border rounded-lg mb-3 hover:border-primary transition-colors" 
+                     data-contact-id="${contact.id}"
+                     onclick="selectContact(${contact.id})">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-primary text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-medium text-text-primary">${contact.name}</p>
+                            <p class="text-sm text-text-secondary">${contact.phone}</p>
+                            <p class="text-xs text-text-tertiary">${contact.email}</p>
+                        </div>
+                        <i class="fas fa-check-circle text-2xl text-primary opacity-0 contact-check"></i>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectContact(contactId) {
+            // Remove previous selection
+            document.querySelectorAll('.contact-card').forEach(card => {
+                card.classList.remove('selected');
+                card.querySelector('.contact-check').style.opacity = '0';
+            });
+
+            // Add new selection
+            const selectedCard = document.querySelector(`[data-contact-id="${contactId}"]`);
+            selectedCard.classList.add('selected');
+            selectedCard.querySelector('.contact-check').style.opacity = '1';
+
+            // Store selected contact
+            selectedContact = mockContacts.find(c => c.id === contactId);
+        }
+
+        function confirmContactSelection() {
+            if (!selectedContact) {
+                alert(translations[currentLang].selectContactFirst);
+                return;
+            }
+
+            document.getElementById('lenderName').value = selectedContact.name;
+            document.getElementById('contactName').textContent = selectedContact.name;
+            document.getElementById('contactPhone').textContent = selectedContact.phone;
+            document.getElementById('selectedContactInfo').classList.remove('hidden');
+
+            closeContactModal();
+            updateFormProgress();
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const formData = {
+                id: Date.now(),
+                loanName: document.getElementById('loanName').value,
+                lenderName: document.getElementById('lenderName').value,
+                lenderContact: selectedContact,
+                principalAmount: parseFloat(document.getElementById('principalAmount').value),
+                interestRate: parseFloat(document.getElementById('interestRate').value),
+                loanTerm: parseInt(document.getElementById('loanTerm').value),
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value,
+                monthlyPayment: parseFloat(document.getElementById('monthlyPaymentAmount').textContent.replace('৳ ', '').replace(/,/g, '')),
+                totalPayable: parseFloat(document.getElementById('totalPayableAmount').textContent.replace('৳ ', '').replace(/,/g, '')),
+                totalInterest: parseFloat(document.getElementById('totalInterestAmount').textContent.replace('৳ ', '').replace(/,/g, '')),
+                status: 'active',
+                paidAmount: 0,
+                remainingAmount: parseFloat(document.getElementById('totalPayableAmount').textContent.replace('৳ ', '').replace(/,/g, '')),
+                createdAt: new Date().toISOString()
+            };
+
+            // Save to localStorage
+            let loans = JSON.parse(localStorage.getItem('loans') || '[]');
+            loans.push(formData);
+            localStorage.setItem('loans', JSON.stringify(loans));
+
+            // Show success message
+            alert(translations[currentLang].successMessage);
+
+            // Redirect to loan management
+            window.location.href = 'loan_management.html';
+        }
+
+        function handleCancel() {
+            if (confirm(translations[currentLang].cancelConfirm)) {
+                window.location.href = 'loan_management.html';
+            }
+        }
+
+        function handleLogout() {
+            if (confirm(currentLang === 'en' ? 'Are you sure you want to logout?' : 'আপনি কি নিশ্চিত যে আপনি লগআউট করতে চান?')) {
+                localStorage.removeItem('isAuthenticated');
+                localStorage.removeItem('authMethod');
+                localStorage.removeItem('googleUser');
+                window.location.href = 'login_authentication.html';
+            }
+        }
+
+        // Close modal on outside click
+        document.getElementById('contactModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeContactModal();
+            }
+        });
+    </script>
+<script id="dhws-dataInjector" src="../public/dhws-data-injector.js"></script>
+</body>
+</html>
